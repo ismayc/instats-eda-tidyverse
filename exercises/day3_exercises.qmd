@@ -1,0 +1,358 @@
+---
+title: "Statistics in R with the `tidyverse`"
+author: "Dr. Chester Ismay"
+subtitle: "Day 3 Exercises"
+format: html
+---
+
+```{r}
+#| include: false
+options(width = 120)
+```
+
+
+# Day 3: Sampling and Estimation in R
+
+## Session 7: Sampling
+
+### 1. Load Necessary Packages
+
+```{r}
+# Load the required packages
+library(dplyr)
+library(ggplot2)
+library(moderndive)
+library(infer)
+```
+
+- These packages provide tools for data wrangling, visualization, and modeling.  
+
+---
+
+### 2. Prepare Population Dataset with Generation
+
+```{r}
+# For reproducibility
+set.seed(2024)
+
+# Create vectors of sport ball types and their proportions
+types_of_sport_balls <- c("Basketball", "Pickleball", "Tennis Ball", 
+                          "Football/Soccer", "American Football")
+proportion_of_each_type <- c(0.2, 0.15, 0.3, 0.25, 0.1)
+
+# Create a tibble of 1200 sport balls that will act as our population
+store_ball_inventory <- tibble(
+  ball_ID = 1:1200,
+  ball_type = sample(x = types_of_sport_balls,
+                     size = 1200, 
+                     replace = TRUE, 
+                     prob = proportion_of_each_type
+  )
+)
+```
+
+- We'll be exploring a synthesized data set of an inventory at a large sporting goods store. The inventory pertains to different types of sports balls, 1200 in total.
+
+---
+
+### 3. Exploring Dataset Structure
+
+```{r}
+# Use glimpse to explore the structure of the dataset
+
+```
+
+
+---
+
+### 4. Population Parameters
+
+```{r}
+# Create a count of ball_type
+
+
+# Determine the proportion of basketballs in the inventory
+
+
+# Convert p to a numeric value
+
+
+# Or using the tidyverse
+
+```
+
+
+---
+
+### 5. Take a Sample of Balls
+
+```{r}
+# Retrieve a sample of 10 balls from the inventory
+
+
+# Determine the proportion of basketballs in the sample
+
+```
+
+---
+
+### 6. Take Another Sample of Balls
+
+```{r}
+# Retrieve another sample of 50 balls from the inventory
+
+
+# Determine the proportion of pickleballs in the sample
+
+```
+
+
+---
+
+### 7. Take 1000 Samples of Size 10 from the Population
+
+```{r}
+# Use `rep_slice_sample()` from the `infer` package
+
+```
+
+
+---
+
+### 8. Calculate Sample Proportions and Visualize Them
+
+```{r}
+# Determine sample proportions with `dplyr`
+
+
+# Create a histogram of the sample proportions with 8 bins
+
+
+```
+
+
+---
+
+### 9. Determine a Guess at the Standard Error
+
+```{r}
+# Using the simulations, calculate the standard deviation of the 
+# sample proportions
+
+
+# Using the formula for the standard error of a sample proportion
+
+```
+
+### 10. Use Function from Walkthrough to Calculate Standard Error
+
+```{r}
+# Here's the function from the walkthrough to calculate the standard error
+se_sample_props <- function(size, repetitions = 1000, type = "Pickleball") {
+  props <- store_ball_inventory |> 
+    rep_slice_sample(n = size, reps = repetitions, replace = FALSE) |> 
+    summarize(prop = mean(ball_type == type))
+  
+  se_sample_props <- props |> 
+    summarize(sd(prop)) |> 
+    pull()
+  
+  return(se_sample_props)
+}
+
+# Use the function to calculate the standard error for a sample size of 10
+# with 2000 repetitions for Basketball
+
+```
+
+---
+
+## Session 8: Estimation using Theory-based Methods
+
+### 11. Population Data with Numeric Variable of Interest
+
+Assume we have information about the population of homes in Phoenix, AZ. We
+are interested in their use of electricity factoring in that some homes
+do not have air conditioning and only use fans.
+
+```{r}
+# For reproducibility
+set.seed(2024)
+
+# Number of homes in each group
+n_ac <- 0.8 * 600000
+n_fans <- 0.2 * 600000
+
+# Simulate electricity usage (in kWh) for homes with AC
+ac_usage <- rnorm(n_ac, mean = 1500, sd = 300)  # Higher mean for AC usage
+
+# Simulate electricity usage (in kWh) for homes using fans
+fan_usage <- rnorm(n_fans, mean = 800, sd = 150)  # Lower mean for fan usage
+
+# Combine into a single data frame
+electricity_usage_phoenix <- tibble(
+  home_ID = 1:(n_ac + n_fans),
+  cooling_system = c(rep("AC", n_ac), rep("Fans", n_fans)),
+  usage_kWh = c(ac_usage, fan_usage)
+)
+
+# View the data
+electricity_usage_phoenix
+```
+
+### 12. The Sample and the Sample Statistic
+
+```{r}
+# Choose sample size
+sample_size <- 1000
+
+# Generate a sample
+
+
+# Calculate the sample mean
+
+
+# Calculate the standard deviation 
+
+```
+
+
+### 13. Population Parameter
+
+```{r}
+# Calculate the population mean
+
+
+# Calculate the population standard deviation
+
+```
+
+### 14. Confidence Interval for the Population Proportion (Assuming We Know $\sigma$)
+
+```{r}
+# Calculate the margin of error for a 90% confidence interval
+
+
+# Recall the point estimate
+
+
+# Calculate the confidence interval
+
+
+# Display the confidence interval
+
+
+# Remember the population parameter (we usually don't know it)
+
+```
+
+### 15. Confidence Interval for the Population Proportion (Assuming We Don't Know $\sigma$)
+
+```{r}
+# Calculate the margin of error for a 90% confidence interval
+
+
+# Same point estimate
+
+
+# Calculate the confidence interval
+
+
+# Display the confidence interval
+
+
+# Remember the population parameter (we usually don't know it)
+
+```
+
+### 16. Interpreting the Confidence Interval
+
+
+
+---
+
+## Session 9: Estimation via Bootstrapping Methods
+
+### 17. Assume We Only Have A Sample
+
+```{r}
+# Assume we only have a sample of 1000 homes and their electricity usage
+# (What you created above)
+
+```
+
+---
+
+### 18. Going Over the `infer` Framework
+
+#### Describe each step in the `infer` framework you have seen so far to calculate bootstrap statistics
+
+
+
+---
+
+### 19. Bootstrapping the Sample
+
+```{r}
+# Bootstrapping the sample
+
+```
+
+---
+
+### 20. Determine the Mean of the Bootstrap Sample
+
+```{r}
+# Calculate the mean of the bootstrap sample
+
+```
+
+---
+
+### 21. Bootstrapping 1000 Samples
+
+```{r}
+# Bootstrapping 1000 samples
+
+```
+
+### 22. Get the Mean of Each Bootstrap Sample
+
+```{r}
+# Calculate the mean of each bootstrap sample
+
+```
+
+---
+
+### 23. Visualizing the Bootstrap Distribution
+
+```{r}
+# Create a histogram of the bootstrap means
+
+```
+
+---
+
+### 24. Calculate the Bootstrap Confidence Interval
+
+```{r}
+# Calculate the 90% bootstrap confidence interval in two ways since bell-shaped
+
+```
+
+---
+
+### 25. Interpretation of the Bootstrap Confidence Interval
+
+
+
+---
+
+### 26. Visualize Confidence Interval on Top of Bootstrap Distribution
+
+```{r}
+# Show the histogram of bootstrap means with the confidence interval
+# and the population parameter (not usually known)
+
+```

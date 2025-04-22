@@ -1,0 +1,84 @@
+## Selecting and Filtering for Relevant Observations
+
+- Use `select()` to focus on relevant variables for your analysis
+- Use `filter()` to narrow the dataset to just the rows you need
+- Combine with `arrange()` and `slice_sample()` to inspect sorted or random subsets
+- Enables fast inspection and validation of data quality
+
+::: {.notes}
+*Why this matters*  
+Most real-world datasets have more columns than you need, and may contain thousands of rows. Focusing on what's relevant streamlines your work.
+
+*What you’ll learn*  
+You’ll use `select()` to choose just a few meaningful variables and `filter()` to isolate high-popularity songs. These early steps help you understand what kind of entries you're working with and build intuition before modeling.
+:::
+
+---
+
+## Creating New Variables for Analysis
+
+- Use `mutate()` to derive new insights from existing columns
+- Create binary flags like `high_energy_dance`
+- Use `case_when()` for multiple conditional groupings like `popularity_group`
+- Essential for feature engineering and summarization
+
+::: {.notes}
+*Why create new columns?*  
+You often need to group or flag data before plotting or modeling. Creating new variables like “high tempo” or “popularity group” helps you summarize traits.
+
+*What you’ll do*  
+You’ll use logical comparisons and `case_when()` to tag songs with labels like "high energy dance" or "popular vs. not popular." This supports clearer analysis and customized summaries.
+:::
+
+---
+
+## Reshaping Data for Deeper Analysis
+
+- Use `pivot_longer()` to stack multiple columns into one (long format)
+- Use `pivot_wider()` to spread grouped counts across columns (wide format)
+- Enables advanced visualization and comparison across features or categories
+
+::: {.notes}
+*Why reshape data?*  
+Long format is useful for grouped summaries and faceted plots, while wide format helps with comparisons across categories.
+
+*What you’ll learn*  
+You’ll turn multiple audio features into a single column using `pivot_longer()`, and later transform grouped counts into wide format using `pivot_wider()`.
+
+These transformations are key to building flexible, tidy pipelines.
+:::
+
+---
+
+## Separating and Uniting Text Columns
+
+- Use `separate()` to split one column into many (e.g., artists list)
+- Use `unite()` to combine multiple columns into one (e.g., “track by artist”)
+- Great for cleaning and structuring messy text fields
+
+::: {.notes}
+*Why split or combine columns?*  
+Real-world data often stores multiple values in a single column. To analyze artist collaborations, we need to split them. To make readable labels, we might want to combine names.
+
+*What you’ll do*  
+You’ll use `separate()` to extract each artist into its own column and analyze which genres feature more collaborations. Then you’ll use `unite()` to create a compact label for each track + artist.
+:::
+
+---
+
+## Tidying and Recoding Variables
+
+- Use `janitor::clean_names()` to standardize messy column names
+- Use `remove_empty()` to remove empty columns
+- Use `mutate()` and `case_match()` to recode or reorder categorical values
+- Critical for making your data analysis-ready
+
+::: {.notes}
+*Why tidy and recode?*  
+Data straight from external sources may have symbols, inconsistencies, or awkward formatting. Tidying your columns and labels makes your work easier and more reproducible.
+
+*What you’ll learn*  
+You’ll use `janitor::clean_names()` to clean up unruly names and `mutate()` to recode popularity flags to simple labels like “yes” and “no.” These cleaning steps lay the groundwork for robust analysis and clear visualization.
+:::
+
+---

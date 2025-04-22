@@ -1,0 +1,90 @@
+## Bringing ggplot2 to Life with `ggplotly()`
+
+- Use `ggplotly()` to add interactivity to your existing ggplot2 visualizations  
+- Enables zooming, panning, and dynamic tooltips  
+- No need to rewrite your plots—just wrap them in `ggplotly()`  
+- Preserves layout and theme from `ggplot2`  
+
+::: {.notes}
+*Why ggplotly()?*  
+One of the easiest ways to go from static to interactive is using `ggplotly()`. You write your plot just as you normally would in `ggplot2`, and then wrap it in `ggplotly()`.
+
+This automatically adds interactivity—hover tooltips, zoom, and pan—without changing the plot's layout or layers.
+
+It’s ideal for exploratory visuals where users want to dig into specific points and relationships.
+:::
+
+---
+
+## Enhancing Tooltips for Exploration
+
+- Use the `text` aesthetic in `ggplot2` to create custom hover content  
+- Pass `tooltip = "text"` to `ggplotly()` to show only the custom text  
+- Combine multiple fields into rich tooltips using `paste()` or `str_c()`  
+- Helps provide more context without cluttering the plot itself  
+
+::: {.notes}
+*What’s a tooltip?*  
+A tooltip is what appears when you hover over a point in an interactive plot. By default, plotly might show raw variable names, but you can customize that.
+
+Using the `text` aesthetic, you can build custom tooltips—like showing the track name, artist, and genre on hover.
+
+This is especially powerful in exploratory analysis: you can fit more data into the story without overloading the visual.
+:::
+
+---
+
+## Building Interactive Bar and Box Plots
+
+- Use `plot_ly()` for full control over interactivity from the start  
+- Create bar charts with hover text and reorder categories  
+- Build boxplots with `type = "box"` to explore distribution across groups  
+- `layout()` customizes titles, axis labels, and scales  
+
+::: {.notes}
+*From static to exploratory*  
+You’re not limited to scatterplots. `plot_ly()` allows you to build bar charts, histograms, and boxplots with full interactivity.
+
+You can highlight group differences by genre or popularity, and use tooltips to add detail.  
+And when combined with `layout()`, you have full control over how your audience experiences the visual—titles, axes, and more.
+
+The beauty? All of it is reactive and immediate—users can hover, zoom, and interact.
+:::
+
+---
+
+## Comparing Multiple Variables in Long Format
+
+- Use `pivot_longer()` to reshape data for multi-feature plotting  
+- Facet across features like energy, valence, and danceability  
+- Use one consistent structure to build many plots at once  
+- `ggplotly()` makes each subplot interactive  
+
+::: {.notes}
+*Why go long?*  
+When you want to compare several numeric features at once, a long format is your best friend. It lets you create one tidy structure where you can facet or color by variable.
+
+In this session, we created boxplots for different features split by popularity and converted the whole thing to an interactive plot using `ggplotly()`.
+
+This strategy helps standardize your visualization workflow while still offering deep insights.
+:::
+
+---
+
+## Adding Sliders, Lines, and Hover to Time Series
+
+- Use `plot_ly()` to plot time series with line mode  
+- Add range sliders with `rangeslider = list(visible = TRUE)`  
+- Build hover text dynamically using `mutate()`  
+- Use `ggplotly()` to make custom `ggplot2` time series plots interactive  
+
+::: {.notes}
+*Why interact with time?*  
+Time series plots are more powerful when users can zoom in and out. Adding range sliders lets you drill into specific time frames or view trends at scale.
+
+We also used hover tooltips to display high temps, wind gusts, or flight performance on specific days. By layering these with line plots or point plots, the result is a clear and explorable time-based narrative.
+
+Combining `ggplot2` with `ggplotly()` means you get the expressive grammar of ggplot *plus* the interactivity of plotly.
+:::
+
+---

@@ -1,0 +1,1301 @@
+---
+title: "Exploratory Data Analysis in R with the `tidyverse`"
+author: "Dr. Chester Ismay"
+subtitle: "Day 2 Walkthrough Answers"
+format: 
+  html:
+    toc: true
+    toc-title: "Contents"  # Optional, customize the title of the TOC
+    toc-location: left     # Specifies the location of the TOC (can also be 'right')
+    toc-float: true        # Enables the floating TOC
+    toc-depth: 3           # Sets the depth of the TOC (levels of headers)
+---
+
+```{r}
+#| include: false
+options(width = 120)
+```
+
+
+# Day 2: Automating Repetitive Tasks & Interactive Visualizations
+
+## Session 4: Functional Programming
+
+### 31. Load necessary packages and data
+
+```{r}
+# Load the required packages and data
+library(purrr)
+library(moderndive)
+library(tidyr)
+library(dplyr)
+library(stringr)
+library(plotly)
+library(azflights24)
+library(lubridate)
+
+spotify <- spotify_by_genre |>
+  dplyr::distinct(track_name, .keep_all = TRUE) 
+```
+
+This gets us back to where we were before when we finished up the Day 1 material.
+
+### 32. Mapping over columns to summarize
+
+```{r}
+# Summarize multiple numeric audio features by calculating their mean and standard deviation
+# Use across() to apply functions over selected columns
+# Reshape the output so each row represents a feature-statistic combination
+
+spotify |>
+  summarize(across(
+    c(popularity, danceability, energy, tempo),
+    list(mean = ~mean(.x, na.rm = TRUE),
+         sd = ~sd(.x, na.rm = TRUE))
+  )) |>
+  pivot_longer(everything(), names_to = c("feature", "stat"), names_sep = "_")
+```
+
+- We use `across()` to apply `mean()` and `sd()` to multiple numeric columns at once, avoiding repetitive code.  
+- The selected features—`popularity`, `danceability`, `energy`, and `tempo`—are each summarized with both statistics.  
+- The `list()` inside `across()` allows us to define multiple summary functions at once.  
+- `pivot_longer()` reshapes the wide summary output into long format, with separate `feature` and `stat` columns.  
+- This tidy format is ideal for further analysis or plotting, especially when comparing metrics across features.
+
+### 33. Extracting featured artists with `map_chr()` and `str_extract()`
+
+```{r}
+# Define a custom function to extract featured artist names from track titles
+# Looks for phrases like "(feat. XYZ)" or "(with XYZ)" using regex
+extract_feature <- function(name) {
+  str_extract(name, "(?i)(?<=\\()(with|feat\\.)[^)]*(?=\\))")
+}
+```
+
+```{r}
+# Apply the extraction function to each track name using map_chr
+# Create a new column for the extracted featured artist string
+# Filter to show only tracks that actually contain a featured artist
+# Then display a random sample of 30 such tracks
+spotify |>
+  mutate(feature_raw = map_chr(track_name, extract_feature)) |>
+  select(track_name, feature_raw, track_genre) |>
+  filter(!is.na(feature_raw)) |> 
+  slice_sample(n = 30)
+```
+
+- We define a custom function using `str_extract()` to pull featured artist names from track titles that include phrases like `(feat. ...)` or `(with ...)`.  
+- The regex uses lookarounds to extract the text inside parentheses without keeping the parentheses themselves.  
+- We apply this function to every track using `map_chr()` from the `purrr` package, creating a new column `feature_raw`.  
+- Filtering for non-`NA` values isolates only those tracks that contain featured artists.  
+- Sampling 30 rows gives us a quick view of how featured artists appear in the data.
+
+### 34. Applying a summary function across groups
+
+```{r}
+# Split the spotify dataset into a list of data frames, one per genre
+genre_groups <- spotify |>
+  group_split(track_genre)
+
+# Assign names to each list element based on the genre
+names(genre_groups) <- spotify |>
+  distinct(track_genre) |>
+  pull()
+```
+
+```{r}
+# Apply a trimmed mean function to the popularity column of each genre
+# map_dbl() returns a named numeric vector of trimmed means
+map_dbl(genre_groups, ~ mean(.x$popularity, trim = 0.1, na.rm = TRUE))
+```
+
+- We use `group_split()` to divide the dataset into a list of smaller data frames—one for each genre.  
+- `names()` assigns the genre names to each list element, making the output easier to read and interpret.  
+- `map_dbl()` applies a trimmed mean function to the `popularity` column of each genre-specific data frame.  
+- Using `trim = 0.1` excludes the top and bottom 10% of values, reducing the influence of outliers.  
+- This workflow is useful for applying custom or complex operations across groups that aren’t easily handled with `summarize()`.
+
+### 35. Using `walk()` for side effects like saving
+
+```{r}
+# Identify the top 3 most common genres by number of tracks
+# Extract the genre names into a character vector
+top_genres <- spotify |>
+  count(track_genre, sort = TRUE) |>
+  slice_head(n = 3) |>
+  pull(track_genre)
+
+top_genres
+```
+
+```{r}
+# For each of the top 3 genres, create a histogram of popularity
+# Save each plot as a PNG file using ggsave()
+walk(top_genres, function(genre_name) {
+  p <- spotify |>
+    filter(track_genre == genre_name) |>
+    ggplot(aes(x = popularity)) +
+    geom_histogram(binwidth = 5, fill = "forestgreen", color = "black") +
+    labs(title = paste("Popularity for", genre_name), 
+         x = "Popularity", y = "Count")
+  
+  ggsave(filename = paste0("popularity_", genre_name, ".png"), plot = p, 
+         width = 6, height = 4)
+})
+```
+
+- We identify the top 3 genres in the dataset by counting the number of tracks per genre and extracting their names.  
+- `walk()` is used to iterate over each top genre and execute a plotting-and-saving routine without returning values.  
+- For each genre, we filter the data and generate a histogram of track popularity.  
+- `ggsave()` saves each plot as a PNG file with a genre-specific filename.  
+- This approach is ideal for automating repetitive visualizations or exports for different subgroups in a dataset.
+
+### 36. Identifying shouting titles
+
+```{r}
+# Define a function that returns TRUE if a title is all uppercase
+# It allows spaces, digits, and punctuation but must contain at least one A–Z letter
+is_all_caps <- function(x) {
+  str_detect(x, "^[A-Z\\s0-9[:punct:]]+$") & str_detect(x, "[A-Z]")
+}
+```
+
+```{r}
+# Apply the function to each track title to flag shouting titles
+# Add a new logical column and sort the data so TRUE values appear first
+(
+  shout_labeled <- spotify |>
+    mutate(is_shouting = map_lgl(track_name, is_all_caps), .after = track_name) |>
+    arrange(desc(is_shouting))
+)
+```
+
+```{r}
+# Count how many tracks are considered "shouting" titles vs not
+shout_labeled |>
+  count(is_shouting)
+```
+
+- We define a custom function `is_all_caps()` that detects if a string is written entirely in uppercase letters, allowing spaces, numbers, and punctuation.  
+- The function also ensures that at least one A–Z letter is present, avoiding false positives like strings made only of symbols.  
+- `map_lgl()` applies the function to each track name, producing a new logical column `is_shouting`.  
+- We insert the new column right after `track_name` using `.after`, keeping the data tidy and readable.  
+- Sorting the dataset by `is_shouting` brings all uppercase titles to the top for easy inspection.  
+- Finally, we use `count()` to summarize how many shouting vs. non-shouting titles are in the dataset.
+
+### 37. Nesting and mapping to summarize within groups
+
+```{r}
+# Identify the top 3 most common genres by track count
+# For each genre, create a filtered data frame with one artist per row
+top_genre_dfs <- spotify |>
+  count(track_genre, sort = TRUE) |>
+  slice_head(n = 3) |>
+  pull(track_genre) |>
+  map(~ spotify |>
+        filter(track_genre == .x) |>
+        separate_rows(artists, sep = ";") |>
+        select(track_name, artists))
+```
+
+```{r}
+# Combine all genre-specific data frames into one using reduce() and bind_rows()
+top_genre_combined <- reduce(top_genre_dfs, bind_rows)
+
+# Count how often each artist appears in the top 3 genres
+top_genre_combined |> count(artists, sort = TRUE)
+```
+
+- We use `map()` to apply the same filtering and transformation steps to the top 3 genres, producing a list of genre-specific data frames.  
+- `separate_rows()` splits artist collaborations so each artist gets their own row, allowing for accurate counts.  
+- Each mini data frame keeps only the `track_name` and `artists` columns for focused analysis.  
+- `reduce()` with `bind_rows()` merges all the genre-specific data frames into one unified dataset.  
+- The final `count()` tallies how often each artist appears across the top genres, highlighting the most active contributors.  
+- This pattern is great for when you need to analyze subgroups separately before combining results for broader insight.
+
+### 38. Functional search: which column contains a specific value?
+
+```{r}
+# Select only character columns for text-based search
+# Use imap_lgl() to check each column for any value that includes the word "may" (case-insensitive)
+# Return only the columns where the condition is TRUE
+spotify |>
+  select(where(is.character)) |>
+  imap_lgl(~ any(str_detect(str_to_lower(.x), "may"))) |>
+  keep(identity)
+```
+
+- We limit our search to character columns using `select(where(is.character))`, focusing only on text-based fields.  
+- `imap_lgl()` checks each column to see if **any** of its values include the word “may” (case-insensitive).  
+- The use of `str_to_lower()` ensures matches regardless of capitalization (e.g., “May”, “MAY”, “may”).  
+- The result is a logical vector indicating which columns contain at least one match.  
+- `keep(identity)` filters this vector to return only the columns where the condition is `TRUE`.  
+- This is a flexible technique for pattern searching across a dataset when you don’t know exactly where a value might be found.
+
+
+### 39. Plotting multiple features with `map()` and `ggplot2`
+
+```{r}
+# Define which numeric audio features to visualize
+features <- c("energy", "danceability", "valence")
+
+# Create a function that builds a violin plot of the given feature
+# Plots distribution by popularity group and facets by genre
+make_boxplot <- function(var_name) {
+  spotify |>
+    ggplot(aes(x = popular_or_not, y = .data[[var_name]], fill = popular_or_not)) +
+    geom_violin(show.legend = FALSE, draw_quantiles = c(0.25, 0.5, 0.75)) +
+    facet_wrap(facets = vars(track_genre), nrow = 2) +
+    labs(
+      title = paste("Violin plot of", var_name, "by popularity and genre"),
+      y = var_name,
+      x = NULL
+    )
+}
+```
+
+```{r}
+# Use map() to generate a list of plots—one per feature
+boxplots <- map(features, make_boxplot)
+
+# Use walk2() to print a message before showing each plot
+walk2(
+  .x = boxplots,
+  .y = features,
+  .f = ~ {
+    cat("Now plotting:", .y, "by popularity\n")
+    print(.x)
+  }
+)
+```
+
+- We define a reusable function `make_boxplot()` that creates a violin plot of any selected audio feature by popularity and genre.  
+- `.data[[var_name]]` allows dynamic column selection within `aes()` when working inside a function.  
+- `facet_wrap()` creates separate panels for each genre, making genre-wise comparisons easy.  
+- `map()` generates a list of plots—one for each feature in the `features` vector.  
+- `walk2()` prints a custom message and displays each plot sequentially, helping to narrate the output.  
+- This workflow automates repetitive plotting tasks and supports scalable, tidy visual exploration.
+
+### 40. Automating summary + plot pipeline
+
+```{r}
+# Define which numeric features we want to analyze
+features <- c("energy", "danceability", "tempo", "valence")
+
+# Create a function that:
+# (1) finds the most extreme (highest) track for a feature
+# (2) counts how many values are missing
+# (3) creates a histogram of the feature
+feature_info_plot <- function(var, ...) {
+  
+  # Find the track with the highest value for the feature
+  top_track <- spotify |>
+    filter(!is.na(.data[[var]])) |>
+    arrange(desc(.data[[var]])) |>
+    slice(1) |>
+    select(track_name, artists, !!var := .data[[var]])
+  
+  # Count missing values for the feature
+  n_missing <- spotify |>
+    summarize(missing = sum(is.na(.data[[var]]))) |>
+    pull(missing)
+  
+  # Create a histogram for the feature
+  plot <- spotify |>
+    ggplot(aes(x = .data[[var]])) +
+    geom_histogram(fill = "coral", color = "black", ...) +
+    labs(title = paste("Distribution of", var), x = var)
+  
+  # Return a list of summary info and plot
+  list(top_track = top_track, missing = n_missing, plot = plot)
+}
+```
+
+```{r}
+# Apply the summary+plot function to each feature
+results <- map(features, feature_info_plot, bins = 30)
+
+# Example: View the top track, missing count, and histogram for danceability
+results[[2]]$top_track
+results[[2]]$missing
+results[[2]]$plot
+```
+
+- We define a single function that bundles three tasks: finding the top-valued track, counting missing values, and creating a histogram for a given feature.  
+- `.data[[var]]` lets us dynamically reference column names inside `dplyr` and `ggplot2`, making the function reusable.  
+- The `top_track` output shows which song has the highest value for the selected feature.  
+- The `missing` count gives quick insight into data quality for each feature.  
+- Each `plot` is a histogram of the feature's distribution, styled with customizable arguments like `bins`.  
+- Mapping the function over multiple features automates a detailed, consistent summary for each variable.
+
+---
+
+### Session 4 Review Questions
+
+**`(4.1)`** What is the primary benefit of using `map_*()` functions from the **`purrr`** package?
+
+A. They allow you to mutate multiple columns in a single step without grouping.  
+B. They eliminate the need for using loops by applying a function across lists or vectors, returning a consistent output type.  
+C. They automatically create interactive plots for each element of a list.  
+D. They convert data frames into nested tibbles grouped by variable type.
+
+---
+
+**`(4.2)`** In the context of functional programming in R, what is a key reason for using `walk()` instead of `map()`?
+
+A. `walk()` is used when you want to display plots as inline HTML.  
+B. `walk()` is preferred when applying a function with a return value that will be used later.  
+C. `walk()` is for performing operations with side effects (e.g., saving plots), where you don’t need a return value.  
+D. `walk()` is the only purrr function that supports parallel processing out of the box.
+
+---
+
+**`(4.3)`** What is a major advantage of defining reusable functions (e.g., `is_all_caps()` or `feature_info_plot()`), especially when paired with `map()`?
+
+A. It allows you to convert tidyverse functions into base R equivalents.  
+B. It minimizes the need for conditional logic and nesting entirely.  
+C. It supports clearer, modular code that can be reused and debugged more easily.  
+D. It ensures all results are automatically returned as JSON-compatible outputs.
+
+---
+
+**`(4.4)`** How does the `reduce()` function complement `map()` when working with lists?
+
+A. It generates side-effect functions like `ggsave()` or `print()`, replacing the need for `walk()`.  
+B. It sequentially combines list elements using a binary function, such as merging multiple data frames.  
+C. It transforms character vectors into numeric ones using consistent logic.  
+D. It is used to convert factor variables to character to prepare for visualization.
+
+---
+
+**`(4.5)`** Which scenario best illustrates the use of `imap_lgl()` in exploratory analysis?
+
+A. Searching a list of numeric vectors to compute trimmed means.  
+B. Iterating over grouped plots and saving them to PNGs with labeled filenames.  
+C. Searching all character columns to identify which contain a specific keyword like “may”.  
+D. Converting grouped data frames into JSON summaries for API output.
+
+---
+
+<!-- 
+### Session 4 Review Question Answers
+
+**`(4.1)`** What is the primary benefit of using `map_*()` functions from the **`purrr`** package?  
+**Correct Answer:**  
+**B.** They eliminate the need for using loops by applying a function across lists or vectors, returning a consistent output type.
+
+**Explanation:**  
+`map_*()` functions (like `map_dbl()`, `map_chr()`) replace loops with concise, type-safe iteration, ensuring uniform output structures.
+
+---
+
+**`(4.2)`** In the context of functional programming in R, what is a key reason for using `walk()` instead of `map()`?  
+**Correct Answer:**  
+**C.** `walk()` is for performing operations with side effects (e.g., saving plots), where you don’t need a return value.
+
+**Explanation:**  
+Unlike `map()`, which returns a value, `walk()` is used when the function's purpose is the action itself, like writing files or printing.
+
+---
+
+**`(4.3)`** What is a major advantage of defining reusable functions (e.g., `is_all_caps()` or `feature_info_plot()`), especially when paired with `map()`?  
+**Correct Answer:**  
+**C.** It supports clearer, modular code that can be reused and debugged more easily.
+
+**Explanation:**  
+Encapsulating logic into small, named functions improves code clarity and allows consistent reuse across multiple inputs with `map()`.
+
+---
+
+**`(4.4)`** How does the `reduce()` function complement `map()` when working with lists?  
+**Correct Answer:**  
+**B.** It sequentially combines list elements using a binary function, such as merging multiple data frames.
+
+**Explanation:**  
+While `map()` transforms each list element, `reduce()` is used to combine them—e.g., stacking multiple data frames into one using `bind_rows`.
+
+---
+
+**`(4.5)`** Which scenario best illustrates the use of `imap_lgl()` in exploratory analysis?  
+**Correct Answer:**  
+**C.** Searching all character columns to identify which contain a specific keyword like “may”.
+
+**Explanation:**  
+`imap_lgl()` applies a function to each column (and can use column names), returning a logical vector—perfect for targeted searches.
+
+---
+
+-->
+
+## Session 5: Interactive Data Visualization with `plotly`
+
+### 41. Converting a `ggplot2` scatterplot to an interactive plot with `ggplotly()`
+
+```{r}
+# Create a static scatterplot with ggplot2 comparing danceability and energy
+p <- ggplot(spotify, aes(x = danceability, y = energy)) +
+  geom_point(alpha = 0.4, color = "darkorange") +
+  labs(title = "Energy vs Danceability", x = "Danceability", y = "Energy")
+```
+
+```{r}
+# Convert the static ggplot to an interactive plot using plotly
+ggplotly(p)
+```
+
+- We create a scatterplot using `ggplot2` to explore the relationship between `danceability` and `energy`.  
+- `geom_point(alpha = 0.4)` adds transparency, helping reveal patterns even in dense areas of the plot.  
+- Clear axis labels and a title make the visualization easy to interpret.  
+- Wrapping the plot in `ggplotly()` converts it into an interactive chart with zoom, pan, and tooltip support.  
+- This quick upgrade improves usability and is ideal for data exploration, teaching, or interactive reporting.
+
+### 42. Adding hover text to a scatterplot
+
+```{r}
+# Create a scatterplot with custom hover text showing track name, artists, and genre
+p <- ggplot(spotify |> slice_sample(n = 100), 
+            aes(x = danceability, y = energy,
+                text = paste("Track:", track_name,
+                             "<br>Artist(s):", artists,
+                             "<br>Genre:", track_genre))) +
+  geom_point(alpha = 0.7, color = "steelblue") +
+  labs(title = "Danceability vs Energy (Hover to Explore)")
+```
+
+```{r}
+# Convert the plot to an interactive version with custom tooltip enabled
+ggplotly(p, tooltip = "text")
+```
+
+- We use `slice_sample(n = 100)` to reduce the dataset to a manageable size for visual clarity.  
+- The `text` aesthetic customizes hover content to display track name, artist(s), and genre in HTML format.  
+- `geom_point()` creates the scatterplot, with transparency set to 0.7 for better visibility.  
+- `ggplotly(..., tooltip = "text")` ensures that the interactive tooltips use our custom hover text.  
+- This approach enhances user experience by adding context to each point in the plot, making it ideal for exploration or dashboards.
+
+### 43. Creating an interactive bar chart of track counts by genre
+
+```{r}
+# Count the number of tracks in each genre and sort from most to least
+genre_counts <- spotify |>
+  count(track_genre, sort = TRUE)
+```
+
+```{r}
+# Create an interactive bar chart using plotly::plot_ly
+# Display track counts with custom hover text
+plot_ly(
+  data = genre_counts,
+  x = ~reorder(track_genre, n),
+  y = ~n,
+  type = "bar",
+  text = ~paste(n, "tracks"),
+  hoverinfo = "text"
+) |>
+  layout(
+    title = "Number of Tracks by Genre",
+    xaxis = list(title = "Genre"),
+    yaxis = list(title = "Track Count")
+  )
+```
+
+- We use `count(track_genre, sort = TRUE)` to tally how many tracks belong to each genre, ordered from most to least.  
+- `plot_ly()` builds an interactive bar chart with `type = "bar"` and uses `reorder()` to sort genres along the x-axis.  
+- Custom hover text (`paste(n, "tracks")`) enhances readability when exploring the plot.  
+- `hoverinfo = "text"` ensures only the custom tooltip is shown, not raw values.  
+- `layout()` adds a clear title and axis labels, making the plot suitable for reports or dashboards.  
+- This example demonstrates how to create sleek, interactive summaries of categorical variables with minimal code.
+
+### 44. Interactive boxplots by popularity group
+
+```{r}
+# Create an interactive boxplot of energy levels across genres
+plot_ly(
+  data = spotify,
+  x = ~track_genre,
+  y = ~energy,
+  type = "box"
+) |>
+  layout(
+    title = "Energy Distribution by Genre",
+    xaxis = list(title = "Genre"),
+    yaxis = list(title = "Energy")
+  )
+```
+
+- We use `plot_ly()` with `type = "box"` to visualize the distribution of `energy` across music genres.  
+- Each boxplot shows the median, interquartile range, and potential outliers for that genre’s energy scores.  
+- The interactive format allows users to hover and explore exact values, enhancing interpretability.  
+- `layout()` adds informative axis labels and a descriptive title for clarity.  
+- This plot is great for comparing variability and central tendencies across categories in an engaging way.
+
+### 45. Comparing multiple features with faceted interactive plots
+
+```{r}
+# Convert dataset to long format for multiple features
+spotify_long <- spotify |>
+  select(energy, danceability, valence, popular_or_not) |>
+  pivot_longer(cols = -popular_or_not, names_to = "feature", values_to = "value")
+```
+
+```{r}
+# Create a faceted boxplot comparing distributions across popularity groups
+# One facet per audio feature
+p <- ggplot(spotify_long, aes(x = popular_or_not, y = value, fill = popular_or_not)) +
+  geom_boxplot() +
+  facet_wrap(~ feature, scales = "free") +
+  labs(title = "Feature Distributions by Popularity Group")
+```
+
+```{r}
+# Convert the static faceted plot to an interactive plot
+ggplotly(p)
+```
+
+- We use `pivot_longer()` to reshape multiple audio features into a long format, enabling easy comparison across variables.  
+- The resulting dataset has one column for feature names (`feature`) and one for their values (`value`).  
+- `facet_wrap()` creates a separate boxplot for each feature, grouped by `popular_or_not`, with independent y-axis scales.  
+- `geom_boxplot()` summarizes each feature’s distribution, highlighting medians, quartiles, and outliers.  
+- Converting the plot with `ggplotly()` adds interactivity, letting users hover over each box to see exact values.  
+- This method is ideal for visualizing how multiple features differ between groups in a clean, side-by-side layout.
+
+### 46. Interactive time series plot with `azflights24::weather`
+
+```{r}
+# Create an interactive line chart of daily max wind gusts at FLG airport
+azflights24::weather |>
+  filter(origin == "FLG") |>
+  mutate(date = as_date(time_hour)) |>
+  group_by(date) |>
+  summarize(max_gust = max(wind_gust, na.rm = TRUE)) |>
+  plot_ly(x = ~date, y = ~max_gust, type = "scatter", mode = "lines") |>
+  layout(
+    title = "\nDaily Max Wind Gust in Flagstaff",
+    xaxis = list(title = "Date"),
+    yaxis = list(title = "Max Wind Gust (mph)")
+  )
+```
+
+- We filter the `weather` dataset for Flagstaff (FLG) and convert hourly timestamps to calendar dates using `as_date()`.  
+- `group_by(date)` and `summarize()` compute the **maximum wind gust** for each day.  
+- `plot_ly()` creates an interactive line chart with `type = "scatter"` and `mode = "lines"` to show the trend over time.  
+- The interactive plot supports zooming and tooltips, making it easy to explore peaks and seasonal variation.  
+- Axis labels and a clear title are added using `layout()` to improve readability and presentation.  
+- This visualization is ideal for analyzing time-based trends in weather or other sensor-style datasets.
+
+### 47. On-Time performance scatter plot
+
+```{r}
+# Load the scales package for formatting percentages
+library(scales)
+
+# Summarize flight on-time performance and flight counts by origin and carrier
+flights_ontime <- flights |>
+  filter(!is.na(dep_delay), !is.na(arr_delay)) |>
+  group_by(origin, carrier) |>
+  summarize(
+    ontime_dep = mean(dep_delay <= 0, na.rm = TRUE),  # % of flights that left on time
+    ontime_arr = mean(arr_delay <= 0, na.rm = TRUE),  # % of flights that arrived on time
+    n_flights = n(),
+    .groups = "drop"
+  ) |>
+  inner_join(airlines, by = "carrier") |>  # Add airline names
+  mutate(
+    tooltip = paste0(
+      "Origin: ", origin,
+      "<br>Carrier: ", name,
+      "<br>On-Time Departures: ", percent(ontime_dep, accuracy = 1),
+      "<br>On-Time Arrivals: ", percent(ontime_arr, accuracy = 1),
+      "<br>Total Flights: ", n_flights
+    )
+  )
+```
+
+```{r}
+# Create scatterplot comparing on-time departure and arrival performance
+p <- ggplot(flights_ontime, aes(
+  x = ontime_dep,
+  y = ontime_arr,
+  color = origin,
+  size = n_flights,
+  text = tooltip
+)) +
+  geom_point(alpha = 0.8) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray60") +
+  scale_x_continuous(labels = percent_format(accuracy = 1)) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  labs(
+    title = "On-Time Performance by Origin and Carrier",
+    subtitle = "Each point represents one (origin, carrier) combination",
+    x = "On-Time Departure Rate",
+    y = "On-Time Arrival Rate",
+    size = "Flight Volume",
+    color = "Origin Airport"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+# Convert to interactive with tooltip
+ggplotly(p, tooltip = "text")
+```
+
+- We filter and summarize flight data to calculate the on-time departure and arrival rates by origin and carrier.  
+- `percent()` from the `scales` package formats these rates for display in tooltips.  
+- Each point in the scatterplot represents a unique origin–carrier pair, sized by number of flights and colored by airport.  
+- A 45° dashed line indicates equal performance for departures and arrivals, making deviations easy to spot.  
+- Custom tooltips include origin, carrier name, performance metrics, and total flights, enhancing user interaction.  
+- `ggplotly()` makes the plot interactive, letting viewers hover to explore detailed airline punctuality.
+
+### 48. Highlighting hover info for survey data
+
+```{r}
+# Load weather source survey data and calculate percentages
+data("weather_check", package = "fivethirtyeight")
+
+weather_check |>
+  filter(!is.na(weather_source)) |>
+  count(weather_source, sort = TRUE) |>
+  mutate(
+    pct = scales::percent(n / sum(n), accuracy = 0.1),  # Add percentage column
+    text = paste0(weather_source, "<br>", n, " responses (", pct, ")")  # Custom hover text
+  ) |>
+  plot_ly(
+    y = ~reorder(weather_source, n),  # Reorder by count
+    x = ~n,
+    type = "bar",
+    text = ~text,
+    hoverinfo = "text"  # Use custom hover text
+  ) |>
+  layout(
+    title = "Most Common Weather Sources",
+    xaxis = list(title = "Responses"),
+    yaxis = list(title = "Weather Source")
+  )
+```
+
+- We filter out missing values and count how many respondents preferred each weather source.  
+- A new column `pct` calculates the percentage of responses per source, formatted with `scales::percent()`.  
+- Custom hover text is created with `paste0()` to include source name, count, and percentage.  
+- `plot_ly()` generates an interactive horizontal bar chart, with bars ordered by response count.  
+- `hoverinfo = "text"` ensures only the custom tooltips are shown when hovering.  
+- This visualization clearly highlights the most common weather sources while enabling detailed exploration.
+
+### 49. Interactive histogram of energy with range slider
+
+```{r}
+# Create a histogram of the 'energy' feature with custom styling and a range slider
+plot_ly(
+  data = spotify,
+  x = ~energy,
+  type = "histogram",
+  marker = list(
+    color = 'lightblue',             # Fill color of the bars
+    line = list(
+      color = 'black',               # Border color
+      width = 1.5                    # Border thickness
+    )
+  )
+) |>
+  layout(
+    title = "Histogram of Energy",
+    xaxis = list(
+      title = "Energy",
+      rangeslider = list(visible = TRUE)  # Enable interactive range slider
+    ),
+    yaxis = list(title = "Count")
+  )
+```
+
+- We use `plot_ly()` with `type = "histogram"` to visualize the distribution of the `energy` feature.  
+- Custom styling improves readability with light blue bars and bold black outlines.  
+- A range slider is added to the x-axis, allowing users to zoom into specific energy ranges interactively.  
+- `layout()` defines axis labels and the chart title, making the plot informative and presentation-ready.  
+- This interactive design is great for exploring distributions with variability or subtle structure.
+
+### 50. Linking interactivity with `ggplot2` + `plotly` + custom tooltips
+
+```{r}
+# Step 1: Summarize the monthly high temperatures by airport and year
+monthly_highs <- weather |>
+  filter(!is.na(temp)) |>
+  mutate(
+    month = month(time_hour, label = TRUE),  # Extract month as a labeled factor
+    year = year(time_hour)                   # Extract year
+  ) |>
+  group_by(origin, year, month) |>
+  summarize(
+    avg_high_temp = max(temp, na.rm = TRUE), # Use max temp as the monthly high
+    .groups = "drop"
+  ) |>
+  mutate(
+    tooltip = paste0(
+      "<b>Origin:</b> ", origin,
+      "<br><b>Month:</b> ", month,
+      "<br><b>Year:</b> ", year,
+      "<br><b>High Temp:</b> ", round(avg_high_temp, 1), " °F"
+    )
+  )
+```
+
+```{r}
+# Step 2: Create the ggplot line chart with tooltip text
+p <- ggplot(monthly_highs, aes(
+  x = month, 
+  y = avg_high_temp, 
+  group = interaction(year, origin), 
+  color = origin,
+  text = tooltip
+)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Monthly High Temperature by Airport",
+    x = "Month",
+    y = "High Temperature (°F)",
+    color = "Airport"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+# Step 3: Convert to an interactive plot with custom tooltip
+ggplotly(p, tooltip = "text")
+```
+
+- We compute monthly high temperatures using `max(temp)` grouped by airport, year, and month for a clear seasonal summary.  
+- Month labels are extracted with `month(..., label = TRUE)` for improved plot readability.  
+- A detailed tooltip is created with `paste0()`, combining airport, month, year, and temperature info.  
+- `interaction(year, origin)` ensures each line represents a unique airport–year combination in the plot.  
+- `ggplotly(p, tooltip = "text")` adds interactivity, enabling users to hover for insights and compare trends across time and location.  
+- This is a great example of combining temporal, spatial, and statistical elements into one clear and engaging chart.
+
+---
+
+### Session 5 Review Questions
+
+**`(5.1)`** What is the primary advantage of using `ggplotly()` with an existing `ggplot2` plot?
+
+A. It converts the plot into an interactive version with hover, zoom, and pan capabilities.  
+B. It exports the plot directly to PowerPoint or PDF with built-in animations.  
+C. It adds static labels to each point for easier print output.  
+D. It improves rendering performance by simplifying the plot structure.  
+
+---
+
+**`(5.2)`** Why is specifying the `tooltip = "text"` argument useful in `ggplotly()`?
+
+A. It automatically maps data aesthetics like size or color into tooltips.  
+B. It links tooltips to custom text content, allowing for more informative hover details.  
+C. It ensures that labels are automatically translated into multiple languages.  
+D. It prevents tooltips from showing variable names when using `plot_ly()`.
+
+---
+
+**`(5.3)`** In `plot_ly()`, which of the following enhances the readability of categorical plots like bar charts?
+
+A. Setting `hoverinfo = "none"` to reduce distractions  
+B. Using `facet_wrap()` to group categories into subplots  
+C. Adding annotations using `geom_text()`  
+D. Sorting categories manually by reordering the `y` aesthetic  
+
+---
+
+**`(5.4)`** When creating an interactive histogram with a range slider in `plotly`, which element must be specified?
+
+A. `range_slider = "x"` in the histogram trace definition  
+B. `rangeSelector = TRUE` in the histogram layout  
+C. `add_slider()` inside `geom_histogram()`  
+D. `rangeslider = list(visible = TRUE)` inside the `xaxis` layout  
+
+---
+
+**`(5.5)`** What is the benefit of transforming a dataset to long format before plotting multiple features interactively?
+
+A. It enables easier comparison of multiple variables across a common grouping, such as `popular_or_not`.  
+B. It prevents the need to use the `pivot_wider()` function for grouped bar plots.  
+C. It simplifies layout by removing the need for facetting or coloring.  
+D. It allows faster computation since each column becomes a numeric vector.
+
+---
+
+<!--
+
+### Session 5 Review Question Answers
+
+**`(5.1)`**  
+**Correct Answer:** A. It converts the plot into an interactive version with hover, zoom, and pan capabilities.  
+**Explanation:** `ggplotly()` transforms static ggplot2 plots into interactive ones, making it easier to explore the data dynamically.
+
+---
+
+**`(5.2)`**  
+**Correct Answer:** B. It links tooltips to custom text content, allowing for more informative hover details.  
+**Explanation:** The `text` aesthetic allows you to fully customize hover text when passed into `ggplotly()` with `tooltip = "text"`.
+
+---
+
+**`(5.3)`**  
+**Correct Answer:** D. Sorting categories manually by reordering the `y` aesthetic  
+**Explanation:** Reordering categorical axes improves the interpretability of bar charts by presenting data in a logical order.
+
+---
+
+**`(5.4)`**  
+**Correct Answer:** D. `rangeslider = list(visible = TRUE)` inside the `xaxis` layout  
+**Explanation:** This adds a zoomable slider on the x-axis of a histogram, enhancing interactivity.
+
+---
+
+**`(5.5)`**  
+**Correct Answer:** A. It enables easier comparison of multiple variables across a common grouping, such as `popular_or_not`.  
+**Explanation:** Long-format data is ideal for faceting and grouped comparisons in ggplot2 and plotly visualizations.
+
+
+---
+
+-->
+
+## Session 6: End-to-End Case Study
+
+**Part 1: Load and Prepare the Data**
+
+### 51. Load the data and get an overview
+
+```{r}
+# Load the readr package for reading CSV files
+library(readr)
+
+# Read in the raw data from a CSV file
+palmtrees_raw <- read_csv("../palmtrees_funky.csv")
+
+# Display the dataset to get a quick sense of the structure and contents
+palmtrees_raw
+```
+
+- We use `read_csv()` from the `readr` package to load the `palmtrees_funky.csv` dataset into R.  
+- Printing the dataset gives an immediate overview of its structure, column names, and sample data, helping to identify any potential issues.
+
+
+### 52. Standardize column names for tidy workflows
+
+```{r}
+# Load janitor for cleaning messy or inconsistent column names
+library(janitor)
+
+# Clean column names: convert to lowercase, replace spaces and special characters with underscores
+palms <- palmtrees_raw |> clean_names()
+
+# View structure and types of cleaned data
+glimpse(palms)
+```
+
+- `janitor::clean_names()` standardizes column names by converting them to lowercase and replacing spaces/special characters with underscores.  
+- `glimpse()` helps confirm the cleaning worked and shows the structure of the cleaned dataset, including column types.  
+- This cleanup step improves consistency and reduces potential errors when referencing columns in code.
+
+### 53. Check for missing data
+
+```{r}
+# Summarize how many missing values are in each column
+palms |> 
+  summarize(across(everything(), ~ sum(is.na(.)))) |>
+  pivot_longer(cols = everything(), names_to = "column", values_to = "n_missing") |>
+  arrange(desc(n_missing))
+```
+
+- We use `across()` to count missing values (`NA`s) in each column, providing an overview of data completeness.  
+- `pivot_longer()` reshapes the result into a tidy format for easier interpretation and analysis.  
+- Sorting by the number of missing values helps prioritize columns that may require cleaning or imputation.
+
+---
+
+**Part 2: Understand Variable Types and Distributions**
+
+### 54. Explore the structure of categorical traits
+
+```{r}
+# Count the number of unique values in each selected categorical column
+palms |> 
+  select(climbing, erect, stem_armed, fruit_size_categorical, 
+         fruit_shape, conspicuousness) |>
+  map_df(~ tibble(n_unique = n_distinct(.x, na.rm = TRUE)), .id = "variable")
+```
+
+```{r}
+# Use moderndive's tidy_summary() for a more descriptive summary of the same traits
+palms |> 
+  select(climbing, erect, stem_armed, fruit_size_categorical, 
+         fruit_shape, conspicuousness) |>
+  tidy_summary()
+```
+
+- We use `map_df()` and `n_distinct()` to count unique values in selected categorical columns, giving an overview of their diversity.  
+- `tidy_summary()` from `moderndive` provides a more detailed summary, including counts, proportions, and missing values.  
+- These steps help identify well-defined traits and highlight categorical variables that may need cleaning or recoding.
+
+### 55. Distribution of fruit size types
+
+```{r}
+# Visualize how species are distributed across fruit size categories
+palms |> ggplot(aes(x = fruit_size_categorical)) +
+  geom_bar(fill = "forestgreen") +
+  labs(title = "Distribution of Palm Fruit Sizes")
+```
+
+- We use `geom_bar()` to create a bar chart that shows the distribution of palm species across different fruit size categories.
+- This chart helps identify whether some fruit size categories are more common than others, offering a quick assessment of the data's distribution.
+
+### 56. Create a new trait combining armed features
+
+```{r}
+# Create a new column that summarizes whether the plant has any armament (on stem or leaves)
+palms <- palms |>
+  mutate(is_armed = case_when(
+    stem_armed == "armed" | leaves_armed == "armed" ~ "Armed",
+    stem_armed == "non-armed" & leaves_armed == "non-armed" ~ "Not Armed",
+    TRUE ~ "Unknown"
+  ))
+
+# Count the number of species in each armament category
+palms |> count(is_armed)
+```
+
+- We create a new column, `is_armed`, that combines `stem_armed` and `leaves_armed` into a unified classification of "Armed" or "Not Armed".  
+- The count of species in each armament category is displayed using `count(is_armed)`, giving us insight into the distribution of plant armament.  
+
+### 57. Relationship between fruit size and stem height
+
+```{r}
+# Visualize how stem height varies across different fruit size categories
+palms |> 
+  filter(!is.na(max_stem_height_m)) |>
+  ggplot(aes(x = fruit_size_categorical, y = max_stem_height_m)) +
+  geom_boxplot(fill = "tan") +
+  labs(title = "Stem Height by Fruit Size")
+```
+
+- We use a boxplot to visualize how stem height varies across different fruit size categories.  
+- `filter()` removes missing height values, and `geom_boxplot()` displays the distribution of stem heights for each fruit size group.  
+
+### 58. Distribution of palm subfamilies
+
+```{r}
+# Count how many species belong to each palm subfamily and visualize with a horizontal bar chart
+palms |> 
+  count(palm_subfamily, sort = TRUE) |>
+  ggplot(aes(x = reorder(palm_subfamily, n), y = n)) +
+  geom_col(fill = "lightblue") +
+  coord_flip() +
+  labs(
+    title = "Distribution of Palm Subfamilies",
+    x = "Palm Subfamily",
+    y = "Number of Species"
+  )
+```
+
+- We use a horizontal bar chart to visualize the distribution of palm species across subfamilies, with bars ordered by frequency.  
+- `coord_flip()` rotates the chart for better readability, making it easier to compare the number of species in each subfamily.  
+
+
+### 59. Visualize fruit conspicuousness across subfamilies
+
+```{r}
+# Count the number of species in each palm subfamily by fruit conspicuousness category
+palms |> 
+  filter(!is.na(conspicuousness)) |> 
+  count(palm_subfamily, conspicuousness) |> 
+  ggplot(aes(x = palm_subfamily, y = n, fill = conspicuousness)) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  labs(
+    title = "Distribution of Conspicuous vs Cryptic Fruits by Subfamily",
+    x = "Palm Subfamily",
+    y = "Number of Species"
+  )
+```
+
+- We use a side-by-side bar chart to compare fruit conspicuousness (conspicuous vs. cryptic) across palm subfamilies.  
+- `position = "dodge"` places the bars next to each other, making it easy to compare the number of species in each category.  
+
+
+### 60. Check for outliers in stem height
+
+```{r}
+# Plot a histogram to explore the distribution of stem heights
+palms |> 
+  ggplot(aes(x = max_stem_height_m)) +
+  geom_histogram(bins = 30, fill = "turquoise", color = "black") +
+  labs(title = "Distribution of Stem Heights")
+```
+
+- The histogram visualizes the distribution of stem heights across palm species, helping to identify common height ranges and outliers.  
+- The color choice (`turquoise` for fill and `black` for borders) enhances the chart's clarity and visual appeal.  
+
+
+### 61. Summarize all numeric traits using `purrr::map_df()`
+
+```{r}
+# Select numeric columns and compute mean and standard deviation for each
+num_cols <- palms |> select(where(is.numeric))
+map_df(num_cols, 
+       ~ tibble(
+         mean = mean(.x, na.rm = TRUE), 
+         sd = sd(.x, na.rm = TRUE)
+       ), .id = "variable")
+```
+
+```{r}
+# Compare with tidy_summary() for a full tidy-style summary
+palms |> 
+  select(where(is.numeric)) |>
+  tidy_summary(na.rm = TRUE) |> 
+  select(column, mean, sd)
+```
+
+- We use `map_df()` to compute the mean and standard deviation for each numeric column, creating a tidy summary of the data.  
+- `tidy_summary()` from the `moderndive` package provides a more comprehensive summary, including missing values, and is useful for quick reporting.  
+- Both methods help identify variables with high variability or missing data, preparing the dataset for further analysis or modeling.
+
+### 62. Explore common color description phrases
+
+```{r}
+# Count how many species use each raw fruit color description
+palms |> 
+  filter(!is.na(fruit_color_description_raw)) |> 
+  count(fruit_color_description_raw, sort = TRUE)
+```
+
+- We filter out missing values and count how many times each raw fruit color description appears in the dataset.  
+- Sorting the results helps highlight the most common color descriptions and identifies patterns or inconsistencies.
+
+### 63. Count unique fruit shapes
+
+```{r}
+# Count the number of species associated with each unique fruit shape
+palms |> 
+  count(fruit_shape, sort = TRUE) |>
+  filter(!is.na(fruit_shape))
+```
+
+- We count the number of species associated with each unique fruit shape, sorting the results to see the most common shapes.  
+- Filtering out `NA` values ensures we focus on valid entries, providing a clearer view of the fruit shape distribution.
+
+---
+
+**Part 3: Explore Relationships Between Traits**
+
+### 64. Identify rarer trait combinations
+
+```{r}
+# Check how values are distributed across two traits: stem_armed and conspicuousness
+palms |> count(stem_armed)
+palms |> count(conspicuousness)
+```
+
+```{r}
+# Identify species that are non-armed and have missing conspicuousness data
+rare_traits <- palms |> 
+  filter(stem_armed == "non-armed", 
+         is.na(conspicuousness)) |>
+  select(spec_name, palm_subfamily, palm_tribe, climbing, stem_armed, 
+         conspicuousness)
+rare_traits
+```
+
+```{r}
+# Count how many species have this rare trait combination
+nrow(rare_traits)
+```
+
+```{r}
+# Summarize how these rare combinations are distributed by palm subfamily
+rare_traits |> count(palm_subfamily, sort = TRUE)
+```
+
+- We first check the distribution of values in `stem_armed` and `conspicuousness` to understand their patterns.  
+- We then filter for species that are "non-armed" but have missing `conspicuousness` data, highlighting rare trait combinations.  
+- Finally, we count how many species match this rare combination and summarize its distribution across palm subfamilies, revealing potential data gaps or unusual evolutionary traits.
+
+### 65. Compare stem diameter by growth form
+
+```{r}
+# Compare stem diameter distributions between different growth forms (erect vs. not)
+palms |> filter(!is.na(max_stem_dia_cm)) |>
+  ggplot(aes(x = erect, y = max_stem_dia_cm)) +
+  geom_boxplot() +
+  labs(title = "Stem Diameter by Erect Growth Form")
+```
+
+- We use a boxplot to compare stem diameter distributions between "erect" and "non-erect" growth forms.  
+- The plot shows medians and variability, helping identify whether growth form correlates with stem thickness.  
+- This visualization is useful for understanding structural adaptations related to plant morphology.
+
+### 66. Dodged bar chart: fruit shapes by growth form
+
+```{r}
+# Create an interactive dodged bar chart of fruit shapes by growth form
+palms |>
+  filter(!is.na(fruit_shape), !is.na(erect)) |>
+  count(fruit_shape, erect, sort = TRUE) |>
+  mutate(
+    tooltip = paste0(
+      "<b>Fruit Shape:</b> ", fruit_shape,
+      "<br><b>Growth Form:</b> ", erect,
+      "<br><b>Species Count:</b> ", n
+    )
+  ) |>
+  plot_ly(
+    x = ~n,
+    y = ~reorder(fruit_shape, n),
+    color = ~erect,
+    type = "bar",
+    orientation = "h",
+    text = ~tooltip,
+    hoverinfo = "text"
+  ) |>
+  layout(
+    title = "Distribution of Fruit Shapes by Growth Form",
+    xaxis = list(title = "Number of Species"),
+    yaxis = list(title = "Fruit Shape"),
+    barmode = "group"  # Dodged bars for comparison
+  )
+```
+
+- We create an interactive dodged bar chart to compare fruit shapes by growth form, using `plot_ly()` for interactivity.  
+- Bars are grouped side-by-side (`barmode = "group"`) to compare the number of species for each fruit shape and growth form.  
+- Custom tooltips display additional information, making the chart more informative when hovering over the bars.
+
+### 67. Faceted scatterplots: fruit length vs width by palm subfamily
+
+```{r}
+# Filter to include only complete cases for the relevant variables
+palms_filtered <- palms |>
+  filter(
+    !is.na(average_fruit_length_cm),
+    !is.na(average_fruit_width_cm),
+    !is.na(palm_subfamily)
+  )
+
+# Create a faceted scatterplot with interactive tooltips
+p <- ggplot(palms_filtered, aes(
+  x = average_fruit_length_cm,
+  y = average_fruit_width_cm,
+  text = paste(
+    "<b>Species:</b>", spec_name,
+    "<br><b>Length:</b>", round(average_fruit_length_cm, 2), "cm",
+    "<br><b>Width:</b>", round(average_fruit_width_cm, 2), "cm",
+    "<br><b>Subfamily:</b>", palm_subfamily
+  )
+)) +
+  geom_point(alpha = 0.4, color = "darkgreen", size = 2) +
+  facet_wrap(~ palm_subfamily) +
+  labs(
+    title = "Fruit Length vs. Width by Palm Subfamily",
+    x = "Average Fruit Length (cm)",
+    y = "Average Fruit Width (cm)"
+  ) +
+  theme_minimal()
+
+# Convert to interactive
+ggplotly(p, tooltip = "text")
+```
+
+- We create a faceted scatterplot to compare fruit length vs. width, with separate plots for each palm subfamily.  
+- Tooltips display detailed species-level information, including fruit dimensions and subfamily.  
+- Faceting allows for easy comparison of how fruit dimensions vary across subfamilies, while interactivity enhances data exploration.
+
+### 68. Dodged boxplots: stem height by fruit size and armament
+
+```{r}
+# Filter for complete data in height, fruit size, and armament
+palms_box <- palms |>
+  filter(
+    !is.na(max_stem_height_m),
+    !is.na(fruit_size_categorical),
+    !is.na(is_armed)
+  )
+
+# Create boxplots grouped by fruit size and dodged by armament status
+p <- ggplot(palms_box, aes(
+  x = fruit_size_categorical,
+  y = max_stem_height_m,
+  fill = is_armed
+)) +
+  geom_boxplot(
+    outlier.alpha = 0.3,
+    width = 0.6
+  ) +
+  labs(
+    title = "Stem Height by Fruit Size and Armament",
+    x = "Fruit Size Category",
+    y = "Max Stem Height (m)",
+    fill = "Is Armed?"
+  ) +
+  theme_minimal()
+
+# View static version — interactive version misaligns dodges
+p
+```
+
+- The boxplot compares stem height across different fruit size categories, grouped by whether the plant is armed or not.  
+- `geom_boxplot()` visualizes distributions with outliers, while `fill = is_armed` colors the boxes by armament status.  
+- The static version provides a clear view, but interactive versions may misalign the dodged bars.
+
+### 69. Boxplot of blade length by conspicuousness
+
+```{r}
+# Interactive boxplot showing blade length across fruit conspicuousness groups
+palms |>
+  filter(!is.na(max_blade_length_m), !is.na(conspicuousness)) |>
+  plot_ly(
+    x = ~conspicuousness,
+    y = ~max_blade_length_m,
+    type = "box",
+    color = ~conspicuousness,
+    boxpoints = "outliers",
+    text = ~paste("<b>Species:</b>", spec_name),
+    hoverinfo = "text"
+  ) |>
+  layout(
+    title = "Blade Length by Fruit Conspicuousness",
+    xaxis = list(title = "Fruit Conspicuousness"),
+    yaxis = list(title = "Max Blade Length (m)")
+  )
+```
+
+- The interactive boxplot compares blade length across different levels of fruit conspicuousness, with outliers highlighted.  
+- Species names are displayed in tooltips, allowing users to explore individual data points.  
+- This visualization helps identify variations and outliers in leaf length related to fruit visibility traits.
+
+### 70. Highlight common color patterns in tooltip
+
+```{r}
+# Horizontal bar chart of the 10 most frequent fruit color labels
+palms |>
+  filter(!is.na(main_fruit_colors)) |>
+  count(main_fruit_colors, sort = TRUE) |>
+  slice_max(n, n = 10) |>
+  mutate(label = paste0(n, " species")) |>
+  plot_ly(
+    y = ~reorder(main_fruit_colors, n),
+    x = ~n,
+    type = "bar",
+    hoverinfo = ~label,
+    orientation = "h",
+    marker = list(color = "purple")
+  ) |>
+  layout(
+    title = "Top 10 Most Common Fruit Colors",
+    xaxis = list(title = "Number of Species"),
+    yaxis = list(title = "Fruit Color")
+  )
+```
+
+- The interactive bar chart displays the top 10 most common fruit colors, with bars ordered by frequency.  
+- Hovering over the bars shows a custom tooltip with the number of species for each fruit color.  
+- This visualization helps identify the most prevalent fruit colors, which may offer insights into visual patterns or ecological traits.
+
+---
+
+Well done! Best wishes on your continued learning journey with R and data science. Remember, the key to honing these skills is practice and exploration. Don't hesitate to revisit these concepts and apply them to your own projects. Happy coding!

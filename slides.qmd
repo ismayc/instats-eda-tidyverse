@@ -1,0 +1,13 @@
+---
+title: "Slides"
+---
+
+Here are the slides for each session (in PDF format):
+
+- [Day 1 (Session 1)](slides/session1_eda-tidyverse_slides.pdf)
+- [Day 1 (Session 2)](slides/session2_data-cleaning_slides.pdf.pdf)
+- [Day 1 (Session 3)](slides/session3_dates-strings-categories_slides.pdf)
+- [Day 2 (Session 4)](slides/session4_functional_programming_slides.pdf)
+- [Day 2 (Session 5)](slides/session5_interactive-viz_slides.pdf)
+- [Day 2 (Session 6)](slides/session6_case-study_slides.pdf)
+

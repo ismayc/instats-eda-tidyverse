@@ -1,0 +1,22 @@
+---
+title: Exploratory Data Analysis in R with the tidyverse Seminar
+author: Dr. Chester Ismay
+page-layout: full
+about:
+  template: trestles
+  links:
+    - icon: twitter
+      text: Twitter
+      href: https://twitter.com/old_man_chester
+    - icon: github
+      text: Github
+      href: https://github.com/ismayc
+    - icon: email
+      text: Email
+      href: mailto:chester.ismay@gmail.com
+    - icon: linkedin
+      text: LinkedIn
+      href: https://www.linkedin.com/in/chesterismay/
+---
+
+Welcome to this page for the Exploratory Data Analysis in R with the tidyverse (for [Instats](https://instats.org/seminar/exploratory-data-analysis-in-r-with-tidy3))! Here you will find information about the seminar, including links to the materials (slides and walkthroughs + answers). Many additional examples are available for free in our [ModernDive v2](https://moderndive.com/v2/) textbook, which is also available in print by [CRC Press](https://www.routledge.com/Statistical-Inference-via-Data-Science-A-ModernDive-into-R-and-the-Tidyverse/Ismay-Kim-Valdivia/p/book/9781032708379?srsltid=AfmBOoogWQa70iPtHNMlfbC0Q59O6E-hVtHQMDk9qTgTLE67DORrN_HB).

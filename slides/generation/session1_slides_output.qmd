@@ -1,0 +1,142 @@
+## What is EDA?
+
+- Process of exploring data to uncover patterns and insights
+- Essential for understanding data before modeling
+- Supports better questions, cleaner data, and stronger decisions
+
+::: {.notes}
+*Understanding EDA*
+Exploratory Data Analysis (EDA) is like meeting your data for the first time—you’re trying to understand what’s there, what’s missing, and what might surprise you.
+
+It’s the foundation of all good data science. Whether you’re building a model or generating insights, EDA gives you the tools to clean, summarize, and visualize data.
+
+*Why it’s critical*
+Before jumping into modeling or later phases of analysis, we must ensure we know:
+- What variables exist and how they’re structured
+- Where missing values or duplicates may cause problems
+- How variables differ across categories or groups
+:::
+
+
+---
+
+## Importance of EDA
+
+- Early Error Detection
+- Identifies data anomalies
+- Corrects erroneous assumptions
+- Enhancing Data Understanding
+- Summarizes main characteristics
+Reveals underlying structure
+
+::: {.notes}
+Let’s talk about why Exploratory Data Analysis is so critical—especially before jumping into modeling or advanced tools.
+
+First, EDA helps us with early error detection. You’d be surprised how often datasets contain unexpected values, missing information, or formatting inconsistencies. Without EDA, these anomalies might sneak into your analysis and silently distort your results.
+
+It also helps us correct assumptions we may have going in. Maybe we thought a variable was numeric but it’s actually categorical—or maybe we assumed there were no duplicates and EDA proves otherwise.
+
+Second, EDA plays a huge role in enhancing our understanding of the data. Through simple summaries and visualizations, we begin to see what’s typical, what’s unusual, and where relationships might be forming.
+
+This step is like getting your bearings before taking a journey—it reveals the data’s shape, its quirks, and the types of questions it might help you answer.
+
+Next, we’ll walk through the tools that make this work easier—starting with how to install and load the core packages of the tidyverse.
+:::
+
+
+---
+
+## Installing and Loading Key Packages
+
+- Core tidyverse packages: dplyr, ggplot2, tidyr, etc.
+- Additional tools: janitor, plotly, moderndive, purrr
+- Load data using data() or import from files
+
+::: {.notes}
+*Tooling up for EDA*
+We begin by installing essential packages that make data analysis in R smooth and consistent. The tidyverse is a collection of R packages that work together seamlessly. They have a largely consistent grammar and syntax throughout.
+
+- dplyr: for wrangling and filtering
+- ggplot2: for beautiful, flexible visualizations
+- tibble: for clean, readable data frames
+- purrr: for automating and mapping across variables
+- moderndive: for user-friendly summaries and curated datasets
+
+Loading the spotify_by_genre dataset gives us a ready-to-explore table with audio features, metadata, and genre labels for 6,000 songs.
+:::
+
+
+---
+
+## Meet the Data: spotify_by_genre
+
+- A Rich Dataset for EDA Practice
+- 6,000 Spotify tracks across six genres
+- Mix of metadata, audio features, and popularity indicators
+- Designed for music trend analysis and modeling
+
+::: {.notes}
+*What’s in this dataset?*
+The spotify_by_genre dataset offers real-world data with both categorical and numerical variables:
+- Metadata: track names, artists, albums
+- Audio features: danceability, energy, tempo, key
+- Popularity indicators: numerical score (0–100), and a binary flag for “popular”
+
+We’ll use this dataset to practice:
+- Identifying variable types
+- Cleaning and summarizing data
+- Creating plots that reveal patterns in genres and popularity
+
+This makes it an excellent starting point for exploring music analytics.
+:::
+
+
+---
+
+## Core EDA Skills: Viewing, Cleaning, and Sampling
+
+- Key Actions Before Analysis
+- glimpse() for quick structure review
+- distinct() to remove duplicates
+- count() and slice_sample() for basic exploration
+
+::: {.notes}
+*Looking under the hood*
+EDA starts with simple but powerful checks:
+- glimpse() transposes your data so you can see types and values side-by-side
+- distinct() ensures you’re not counting the same song twice
+- slice_sample() gives a quick peek at actual data values
+
+We also check genre counts with count(track_genre) to see if our data is balanced across categories—a vital step before comparison or modeling.
+
+All these steps help build intuition about your dataset before deeper analysis.
+:::
+
+
+---
+
+## Wrapping Up: Variable Types and Summary Tools
+
+- Summary Stats and Quick Visuals
+- Use class() and map() to inspect variable types
+- summarize() or tidy_summary() for quick stats
+- ggplot() with geom_histogram() to visualize distributions
+
+::: {.notes}
+*Understanding your columns*
+Knowing your variable types helps you choose the right tools:
+- Numeric: popularity, danceability, tempo
+- Categorical: track_genre, explicit, popular_or_not
+
+We generate summary stats using:
+- summarize() to calculate mean, median, and SD
+- tidy_summary() from moderndive for an all-in-one overview
+
+Then, we visualize distributions using histograms to explore questions like:
+- Is track popularity skewed?
+- Are there spikes around certain values?
+- Do we see many low-popularity songs?
+
+These techniques form the core building blocks of EDA in R. Let’s next explore how to do this with code in a Quarto file in RStudio.
+:::
+

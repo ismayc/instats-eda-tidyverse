@@ -1,0 +1,1264 @@
+---
+title: "Exploratory Data Analysis in R with the `tidyverse`"
+subtitle: "Day 1 Walkthrough Answers"
+author: "Dr. Chester Ismay"
+format: 
+  html:
+    toc: true
+    toc-title: "Contents"  # Optional, customize the title of the TOC
+    toc-location: left     # Specifies the location of the TOC (can also be 'right')
+    toc-float: true        # Enables the floating TOC
+    toc-depth: 3           # Sets the depth of the TOC (levels of headers)
+---
+
+```{r}
+#| include: false
+options(width = 120)
+```
+
+
+# Day 1: Exploring, Cleaning, and Organizing Data
+
+## Session 1: Foundations of EDA in R with the tidyverse
+
+### 1: Installing the necessary packages 
+
+```{r}
+#| eval: false
+
+# Create a vector of package names needed for this course
+packages <- c(
+  "moderndive",          # For tidyverse-based data analysis tools and datasets
+  "fivethirtyeight",     # Contains curated datasets from FiveThirtyEight.com
+  "knitr",               # For formatting outputs and rendering R Markdown documents
+  "janitor",             # For cleaning data and column names easily
+  "plotly",              # For creating interactive visualizations
+  "dplyr",               # For data wrangling: filter(), mutate(), summarize(), etc.
+  "ggplot2",             # For static data visualizations using the grammar of graphics
+  "tidyr",               # For tidying and reshaping data
+  "stringr",             # For working with strings using consistent functions
+  "forcats",             # For working with factors (especially useful with categorical variables)
+  "lubridate",           # For working with date and time data
+  "purrr")               # For functional programming tools to iterate and map over data
+
+# Install all the packages listed above from CRAN using a reliable mirror
+install.packages(packages, repos = "https://cran.rstudio.com")
+
+# Alternative: You could install a bundled version of these packages using the tidyverse meta-package
+# packages_revised <- c(
+#   "moderndive", "fivethirtyeight", "knitr", "janitor", "plotly", 
+#   "tidyverse")  # This includes ggplot2, dplyr, tidyr, stringr, forcats, purrr, etc.
+
+# install.packages(packages_revised, repos = "https://cran.rstudio.com")
+
+# Install the azflights24 package from GitHub (not available on CRAN)
+install.packages("remotes")  # Make sure the remotes package is available
+remotes::install_github("moderndive/azflights24")  # Install from GitHub directly
+```
+
+- We start by setting up our tools—installing packages that support different parts of data analysis.  
+- Packages like `dplyr`, `tidyr`, `ggplot2`, and `plotly` help us explore, clean, and visualize data.  
+- `stringr` and `lubridate` are for handling text and dates, which are common in real-world datasets.  
+- `janitor` is great for quickly cleaning messy column names and summarizing categorical data.  
+- `moderndive` and `fivethirtyeight` offer built-in datasets and helper functions for EDA practice.  
+- `knitr` helps us format and output our work, especially when using R Markdown.  
+- We also install `azflights24` from GitHub to explore real-world flight data later in the course.
+
+### 2. Loading the packages and data
+
+```{r}
+# Load packages we will need
+library(dplyr)
+library(ggplot2)
+library(moderndive)
+
+# I'll try to be explicit with using :: as we get started though so
+# you know which package includes the function used.
+
+# Load the spotify_by_genre dataset from the moderndive package
+data("spotify_by_genre", package = "moderndive")
+```
+
+- We load core data analysis tools like `dplyr` for wrangling and `ggplot2` for plotting, which are part of the tidyverse.  
+- The `spotify_by_genre` dataset from the `moderndive` package gives us a real-world music dataset with numeric, categorical, and text features to explore.
+
+#### Dataset Overview: `spotify_by_genre`
+
+This dataset contains information on **6,000 Spotify tracks**, each categorized into one of **six genres**: country, deep-house, dubstep, hip-hop, metal, and rock. It combines **audio feature metrics**, **track metadata**, and a **popularity indicator**, offering a rich foundation for analyzing music trends, exploring genre-specific characteristics, and building predictive models for track popularity.
+
+#### Key Features:
+
+- **21 variables** including:
+- **Metadata**: `track_id`, `artists`, `album_name`, `track_name`, `track_genre`
+- **Popularity**: `popularity` (0–100) and a binary label `popular_or_not` (≥50 considered "popular")
+- **Audio Features**: `danceability`, `energy`, `acousticness`, `valence`, etc. (scaled 0–1)
+- **Musical Structure**: `tempo`, `key`, `mode`, `time_signature`
+- **Track Attributes**: `explicit` (logical), `duration_ms`, `loudness`, `speechiness`
+
+#### Source:
+
+Data was collected using the [Spotify Web API](https://developer.spotify.com/documentation/web-api/), which provides access to comprehensive track-level metadata and audio analysis.
+
+### 3. Viewing the data
+
+```{r}
+# View the structure of the dataset including variable types and example values
+dplyr::glimpse(spotify_by_genre)
+```
+
+```{r}
+#| eval: false
+# Open the dataset in a spreadsheet-style viewer (interactive, only works in RStudio)
+View(spotify_by_genre)
+```
+
+- `glimpse()` gives a quick overview of the dataset’s structure, helping us see column types and example values at a glance.  
+- Using `View()` in RStudio opens the dataset in a scrollable spreadsheet format, making it easier to explore variable names and spot early patterns.  
+- Key variables for analysis include `popularity`, `track_genre`, and features like `danceability`, `energy`, and `explicit`, which offer a mix of numeric and categorical data.
+
+### 4. Remove songs listed multiple times in the data
+
+```{r}
+# Remove duplicate songs based on the track_name column
+# .keep_all = TRUE keeps the first full row for each unique track_name
+spotify <- spotify_by_genre |>
+  dplyr::distinct(track_name, .keep_all = TRUE)
+
+# View the resulting cleaned dataset
+spotify
+```
+
+- We use `distinct()` to remove duplicate songs based on `track_name`, keeping only the first full row for each unique title. 
+- This step helps prevent repeated entries from biasing our analysis and ensures each song is counted only once.
+
+### 5. Take a random sample of the data
+
+```{r}
+# Set a random seed so results are reproducible
+set.seed(2025)
+
+# Take a random sample of 10 rows from the full dataset
+spotify |>
+  dplyr::slice_sample(n = 10)
+```
+
+```{r}
+# Take a random sample of 10 rows but focus only on selected columns
+spotify |>
+  dplyr::select(track_name, artists, track_genre, popularity) |>
+  dplyr::slice_sample(n = 10)
+```
+
+- We use `slice_sample()` to view a random subset of songs, which helps us get a quick feel for the dataset’s content.  
+- Setting a seed ensures the sample is reproducible, which is helpful for teaching or collaboration.  
+- Using `select()` lets us narrow down to key columns like song name, artist, genre, and popularity for a more focused look.
+
+### 6. Spot-checking unique genres
+
+```{r}
+# Count the number of tracks in each genre and sort from most to least
+spotify |>
+  dplyr::count(track_genre, sort = TRUE)
+```
+
+- We count how many tracks belong to each genre, which reveals how the dataset is distributed across categories.  
+- Sorting by count highlights which genres are most and least represented, helping us spot potential imbalances early in our analysis.
+
+### 7. Checking for missing values
+
+```{r}
+# For each column, count how many missing (NA) values there are
+spotify |>
+  dplyr::summarize(across(everything(), ~sum(is.na(.)))) |> 
+  dplyr::glimpse()
+```
+
+- We check each column for missing values using `summarize()` and `across()`, which helps us spot potential issues before analysis.  
+- Identifying missing data early is essential since it can interfere with visualizations, summaries, or modeling steps later on.
+
+### 8. Identifying numeric vs categorical variables
+
+```{r}
+# Check the class of the entire dataset (it's a tibble/data frame)
+class(spotify)
+
+# Check the class of a specific column: track_genre (should be character or factor)
+class(spotify$track_genre)
+
+# Check the class of a numeric column: popularity (should be numeric or integer)
+class(spotify$popularity)
+
+# Use purrr::map_dfr() to apply class() to every column and return results as a data frame
+purrr::map_dfr(spotify, class) 
+
+# Glimpse the result for a readable, wide-format view of column types
+purrr::map_dfr(spotify, class) |> 
+  dplyr::glimpse()
+```
+
+- We use `class()` to identify the type of the dataset and specific columns, such as `track_genre` and `popularity`.  
+- This helps us confirm whether a column is numeric, character, factor, or another type.  
+- `class(spotify)` tells us that the dataset is stored as a tibble/data frame.  
+- Checking individual columns like `track_genre` and `popularity` helps us know how R will treat them in summaries and plots.  
+- `purrr::map_dfr()` applies `class()` to every column and returns the results in a tidy format.  
+- Understanding variable types is critical because it guides how we clean, summarize, visualize, and model the data. ([Here's a mind map](https://coggle.it/diagram/V_G2gzukTDoQ-aZt/t/basic-data-visualization) to help you get started with basic types if needed.)
+
+### 9. Creating summary tables
+
+```{r}
+# Use dplyr to compute common summary statistics for the popularity column
+spotify |>
+  dplyr::summarize(
+    avg_popularity = mean(popularity),         # Mean (average) popularity
+    median_popularity = median(popularity),    # Median popularity
+    sd_popularity = sd(popularity)             # Standard deviation of popularity
+  )
+
+# Use moderndive's tidy_summary() to get a full summary of one or more columns
+spotify |> 
+  moderndive::tidy_summary(columns = popularity)
+```
+
+- We calculate summary statistics like mean, median, and standard deviation to understand the center and spread of the `popularity` variable.  
+- The mean gives the average popularity, while the median shows the midpoint, and the standard deviation tells us how much scores vary.  
+- `summarize()` is a flexible way to compute custom statistics for any variable.  
+- `tidy_summary()` from the `moderndive` package provides a full summary in one step, including min, max, and quartiles.  
+- Using both methods together gives a quick yet detailed picture of a variable’s distribution.  
+- These summaries help us assess whether the data is skewed, spread out, or centered around a typical value.
+
+### 10. Quick plot of distribution
+
+```{r}
+# Create a histogram to visualize the distribution of track popularity scores
+ggplot(data = spotify, aes(x = popularity)) +
+  geom_histogram(binwidth = 5, fill = "steelblue", color = "black") +
+  labs(title = "Distribution of Track Popularity", 
+       x = "Popularity Score", 
+       y = "Count")
+```
+
+- We use a histogram to explore how the `popularity` scores are distributed across all tracks.  
+- `binwidth = 5` groups scores into intervals of 5, making it easier to see patterns and trends.  
+- Most bars show how many songs fall within each popularity range, helping us spot common and rare values.  
+- The visualization helps us check for skew—whether most songs are clustered toward high or low popularity.  
+- It also makes it easier to spot outliers or unusual peaks in the data.  
+- This plot gives us a solid starting point for understanding overall patterns before diving into comparisons or models.
+
+---
+
+### Session 1 Review Questions
+
+**(1.1)** Why is Exploratory Data Analysis (EDA) considered a crucial first step in any data science project?
+
+A. It allows you to train models more quickly.  
+B. It helps reveal patterns, identify data issues, and guide analysis decisions.  
+C. It replaces the need for data cleaning by automating it.  
+D. It transforms all variables into numeric format for modeling.
+
+---
+
+**(1.2)** What is the role of the `distinct()` function in preparing your data?
+
+A. It filters out rows with missing values.  
+B. It removes duplicate rows based on selected columns.  
+C. It transforms all character variables into factors.  
+D. It visualizes the distribution of numeric variables.
+
+---
+
+**(1.3)** What does the `spotify_by_genre` dataset contain?
+
+A. Only audio features from 6,000 classical music tracks  
+B. Survey results about Spotify users’ listening habits  
+C. Metadata and audio features of 6,000 songs across six genres  
+D. Real-time streaming counts of trending tracks globally
+
+---
+
+**(1.4)** Which function is best used to take a random subset of rows from a dataset?
+
+A. `sample_n()`  
+B. `slice_sample()`  
+C. `randomize()`  
+D. `filter()`  
+
+---
+
+**(1.5)** What is the purpose of using `purrr::map_dfr()` in this session?
+
+A. To count the number of missing values in a column  
+B. To classify songs into popular and non-popular categories  
+C. To apply a function across all columns and return the results in a single data frame  
+D. To create visualizations for each genre using ggplot2
+
+---
+
+<!--
+
+### Session 1 Review Question Answers
+
+**(1.1)** Why is Exploratory Data Analysis (EDA) considered a crucial first step in any data science project?  
+
+**Correct Answer:**  
+B. It helps reveal patterns, identify data issues, and guide analysis decisions.
+
+**Explanation:**  
+EDA helps uncover structure, detect errors, and build intuition about the dataset before modeling or advanced analysis.
+
+---
+
+**(1.2)** What is the role of the `distinct()` function in preparing your data?  
+
+**Correct Answer:**  
+B. It removes duplicate rows based on selected columns.
+
+**Explanation:**  
+Using `distinct()` ensures you're not analyzing repeated entries, which could bias your results.
+
+---
+
+**(1.3)** What does the `spotify_by_genre` dataset contain?  
+
+**Correct Answer:**  
+C. Metadata and audio features of 6,000 songs across six genres
+
+**Explanation:**  
+This dataset combines categorical and numeric variables useful for EDA, such as genre, popularity, danceability, and more.
+
+---
+
+**(1.4)** Which function is best used to take a random subset of rows from a dataset?  
+
+**Correct Answer:**  
+B. `slice_sample()`
+
+**Explanation:**  
+`slice_sample()` provides a random selection of rows, which is useful for quick spot-checks or previews of the data.
+
+---
+
+**(1.5)** What is the purpose of using `purrr::map_dfr()` in this session?  
+
+**Correct Answer:**  
+C. To apply a function across all columns and return the results in a single data frame
+
+**Explanation:**  
+This function was used to inspect the class of each column by mapping `class()` over the dataset and combining the results row-wise.
+
+---
+-->
+
+## Session 2: Data Cleaning Fundamentals with `dplyr`, `tidyr`, and `janitor`
+
+### 11. Filtering and selecting columns
+
+```{r}
+# Select a subset of columns and rename track_genre to genre
+# Then take a random sample of 20 rows to explore
+spotify |>
+  select(track_name, artists, genre = track_genre, popularity, energy, 
+         danceability) |> 
+  slice_sample(n = 20)
+```
+
+```{r}
+# Filter for only songs with popularity greater than 80
+# Select only key identifying columns, randomly sample 20, then arrange by popularity (descending)
+spotify |>
+  filter(popularity > 80) |>
+  select(track_name, artists, popularity) |> 
+  slice_sample(n = 20) |> 
+  arrange(desc(popularity))
+```
+
+- We use `select()` to focus on specific columns, helping us reduce clutter and explore only what’s relevant.  
+- Renaming `track_genre` to `genre` makes the column name shorter and easier to work with.  
+- `slice_sample()` lets us inspect a small, random subset of rows, which is useful for getting a feel for the data.  
+- `filter(popularity > 80)` narrows the data to only include high-popularity songs, helping us analyze standout tracks.  
+- `arrange(desc(popularity))` sorts songs from most to least popular, making top-performing tracks easy to spot.  
+- These wrangling steps are key in EDA for zooming in on trends, patterns, or interesting subsets of your data.
+
+### 12. Creating conditional flags
+
+```{r}
+# Create a new logical column to flag songs with both high energy and high danceability
+spotify |>
+  mutate(high_energy_dance = energy > 0.7 & danceability > 0.7) |>
+  count(high_energy_dance)
+```
+
+```{r}
+# Create a new categorical column for popularity levels using case_when
+# Then count how many songs fall into each category
+spotify |>
+  mutate(popularity_group = case_when(
+    popularity >= 75 ~ "high",
+    popularity >= 40 ~ "medium",
+    TRUE ~ "low"
+  )) |>
+  count(popularity_group)
+```
+
+- We use `mutate()` to create new columns based on conditions, helping us flag or group rows for deeper analysis.  
+- The `high_energy_dance` column identifies songs that are both energetic and danceable by checking if both values exceed 0.7.  
+- Counting `TRUE` and `FALSE` values helps us see how common that combination is in the dataset.  
+- `case_when()` allows us to group numeric values (like popularity) into meaningful categories such as “low,” “medium,” and “high.”  
+- Creating categorical groupings from continuous variables simplifies comparisons and improves visualizations.  
+- These custom columns make it easier to answer specific questions and communicate insights clearly.
+
+### 13. Creating new columns with `mutate()`
+
+```{r}
+# Create a new column that calculates the ratio of energy to danceability
+spotify |>
+  mutate(energy_dance_ratio = energy / danceability) |>
+  select(track_name, artists, track_genre, energy, 
+         danceability, energy_dance_ratio) |> 
+  slice_sample(n = 20)
+```
+
+```{r}
+# Add a logical column that flags songs with tempo greater than 140 as high tempo
+# Then count how many songs fall into each category
+spotify |>
+  mutate(high_tempo = tempo > 140) |>
+  count(high_tempo)
+```
+
+- We use `mutate()` to create new variables that help us explore relationships between existing features.  
+- The `energy_dance_ratio` compares energy and danceability, offering a new way to assess the feel of a track.  
+- Viewing a sample of songs with this new ratio lets us explore how it varies across genres and artists.  
+- Creating a `high_tempo` flag helps us classify songs based on a threshold (tempo > 140 BPM).  
+- Logical columns like `high_tempo` are useful for quick counts, filtering, or subgroup analysis.  
+- Adding derived variables allows us to go beyond surface-level data and uncover more meaningful patterns.
+
+### 14. Grouping and summarizing
+
+```{r}
+# Group the data by genre and calculate the average energy for each group
+spotify |>
+  group_by(track_genre) |>
+  summarize(mean_energy = mean(energy, na.rm = TRUE))
+```
+
+```{r}
+# Count how many songs are popular or not within each genre
+spotify |>
+  count(track_genre, popular_or_not)
+```
+
+- We use `group_by()` and `summarize()` to calculate the average energy level within each music genre.  
+- This helps us compare genres to see which ones tend to have more energetic tracks.  
+- The `na.rm = TRUE` argument ensures missing values don’t interfere with our summary statistics.  
+- Counting by both `track_genre` and `popular_or_not` gives us a two-way frequency table.  
+- This count reveals how popularity is distributed across different genres.  
+- Grouped summaries are essential for spotting trends, differences, and relationships across categories.
+
+### 15. Wide to long with `tidyr::pivot_longer()`
+
+```{r}
+# Reshape selected audio features from wide format to long format
+# This creates a 'feature' column for the variable name and a 'value' column for its value
+spotify |>
+  select(track_name, energy, danceability, acousticness) |>
+  tidyr::pivot_longer(cols = c(energy, danceability, acousticness),
+                      names_to = "feature",
+                      values_to = "value")
+```
+
+- We use `pivot_longer()` to reshape the dataset from wide format to long format.  
+- Three audio features—`energy`, `danceability`, and `acousticness`—are transformed into a single `feature` column.  
+- Their corresponding values are placed into a new `value` column, making the data more compact and tidy.  
+- This format is ideal for creating faceted plots or grouped summaries across multiple features.  
+- It allows us to treat multiple columns as levels of a single variable, which simplifies plotting and analysis.  
+- Reshaping data like this is a powerful technique for scaling EDA workflows.
+
+### 16. Long to wide with `tidyr::pivot_wider()`
+
+```{r}
+# Count the number of songs in each genre by popularity category
+# Then reshape the data to have separate columns for 'popular' and 'not popular'
+spotify |>
+  count(track_genre, popular_or_not) |>
+  tidyr::pivot_wider(names_from = popular_or_not, values_from = n)
+```
+
+- We start by counting how many songs are labeled as `popular` or `not popular` within each genre.  
+- This gives us a tall (long) format table showing counts for each genre-popularity combination.  
+- Using `pivot_wider()`, we reshape the data to create separate columns for "popular" and "not popular".  
+- Each genre becomes a row with its respective counts shown side by side.  
+- This wide format makes it easier to compare popularity across genres at a glance.  
+- It's useful for tables, reports, or bar plots that benefit from side-by-side values.
+
+### 17. Splitting a column into multiple parts with `tidyr::separate()`
+
+```{r}
+# Find the maximum number of artists in any single song by counting semicolons
+# Add 1 since semicolons separate the names (n artists = n semicolons + 1)
+max_artists <- spotify |>
+  filter(stringr::str_detect(artists, ";")) |>
+  mutate(n_artists = stringr::str_count(artists, ";") + 1) |>
+  pull(n_artists) |>
+  max(na.rm = TRUE)
+```
+
+```{r}
+# Identify the song that has the most artists
+spotify |>
+  mutate(n_artists = stringr::str_count(artists, ";") + 1) |>
+  arrange(desc(n_artists)) |>
+  slice(1) |>
+  select(track_name, artists, n_artists)
+```
+
+```{r}
+# Create a vector of new column names based on the maximum number of artists found
+artist_cols <- paste0("artist_", seq_len(max_artists))
+```
+
+```{r}
+# Use separate() to split the 'artists' column into multiple artist columns
+# Use fill = "right" to handle cases with fewer than max_artists
+# Keep the original 'artists' column for reference
+split_by_artists <- spotify |>
+  filter(stringr::str_detect(artists, ";")) |>
+  tidyr::separate(artists, into = artist_cols, sep = ";", fill = "right", remove = FALSE) |>
+  select(track_name, artists, track_genre, all_of(artist_cols))
+split_by_artists
+```
+
+```{r}
+# Summarize how many multi-artist songs exist by genre
+split_by_artists |>
+  group_by(track_genre) |>
+  summarize(n_artists = sum(!is.na(artist_1))) |>
+  arrange(desc(n_artists))
+```
+
+- We detect songs with multiple artists by counting semicolons in the `artists` column, then find the maximum number of artists in any song.  
+- `slice(1)` after sorting lets us identify the specific track with the most artists listed.  
+- We use `paste0()` to dynamically generate new column names like `artist_1`, `artist_2`, etc., based on the max number found.  
+- The `separate()` function splits the `artists` column into multiple new columns for easier analysis of individual contributors.  
+- `fill = "right"` ensures shorter artist lists don’t break the structure—missing entries are filled with `NA`.  
+- We summarize how many multi-artist songs exist per genre to examine which genres tend to have more collaborations.
+
+### 18. Uniting columns
+
+```{r}
+# Combine the track_name and artists columns into a single column called track_artist
+# Use " by " as the separator between the song title and the artist(s)
+spotify |>
+  tidyr::unite("track_artist", track_name, artists, sep = " by ") |>
+  select(track_artist, popularity) |>
+  slice_sample(n = 20) |> 
+  arrange(desc(popularity))
+```
+
+- We use `unite()` to merge `track_name` and `artists` into a single column called `track_artist` for clearer labeling.  
+- The separator `" by "` makes the new string easy to read and interpret, like a song title in a playlist.  
+- Selecting just `track_artist` and `popularity` keeps the focus on key information.  
+- Randomly sampling 20 rows gives us a manageable view of the data.  
+- Sorting by descending popularity helps us quickly identify top-performing tracks.  
+- This technique is useful for creating labels in plots or tables that clearly identify each observation.
+
+### 19. Cleaning up with `janitor`
+
+```{r}
+# Simulate messy column names by renaming clean ones to include emojis, symbols, and inconsistent formatting
+spotify_unruly <- spotify |>
+  rename(
+    `Track Name 🎵` = track_name,
+    `ARTISTS (main + featured)` = artists,
+    `Album-Name___v2` = album_name,
+    `DURATION (ms)` = duration_ms,
+    `Popularity SCORE (%)` = popularity,
+    `track genre!` = track_genre,
+    `Explicit?` = explicit,
+    `IS_IT_POPULAR????` = popular_or_not
+  ) |> 
+  mutate(valence = NA_real_)  # Add an entirely empty column to test janitor functions
+
+# Check the column names and dimensions before cleaning
+names(spotify_unruly)
+dim(spotify_unruly)
+```
+
+```{r}
+# Clean the messy column names: make them lowercase, snake_case, and remove special characters
+# Remove any completely empty columns
+spotify_cleaned_some <- spotify_unruly |>
+  janitor::clean_names() |>
+  janitor::remove_empty(which = "cols")
+
+# Check the new cleaned column names and dimensions
+names(spotify_cleaned_some)
+dim(spotify_cleaned_some)
+```
+
+- We simulate messy data by renaming columns with emojis, inconsistent formatting, and symbols to reflect real-world issues.  
+- `clean_names()` from the `janitor` package standardizes column names to lowercase snake_case, making them easier to reference in code.  
+- This function also removes special characters and spaces, which can cause problems in analysis scripts.  
+- We add a fully missing column to test how `remove_empty()` eliminates columns with only `NA` values.  
+- After cleaning, column names become consistent and safe for programming, reducing the chance of errors.  
+- These cleaning steps are essential when preparing raw or imported data for analysis.
+
+### 20. Reordering and recoding variables
+
+```{r}
+# Move the track_genre column to appear right before track_id
+# Recode popular_or_not into a new column popular_recoded using case_match
+# Place the new column directly after track_genre
+spotify |>
+  relocate(track_genre, .before = track_id) |>
+  mutate(popular_recoded = case_match(popular_or_not, 
+                                      "popular" ~ "yes", 
+                                      "not popular" ~ "no"),
+         .after = track_genre) |> 
+  select(1:6) |> 
+  slice_head(n = 10)
+```
+
+- We use `relocate()` to reposition `track_genre` before `track_id`, improving the layout for easier scanning.  
+- `mutate()` with `case_match()` creates a new column that recodes `popular_or_not` into simpler "yes" or "no" values.  
+- The `.after = track_genre` argument places the new `popular_recoded` column right after `track_genre` for better grouping.  
+- Using `select(1:6)` limits our view to the first six columns, which helps keep previews focused and readable.  
+- `slice_head(n = 10)` displays the first 10 rows of the updated dataset for a quick check.  
+- These layout and recoding steps make the dataset more intuitive and better organized for analysis or reporting.
+
+---
+
+### Session 2 Review Questions
+
+**(2.1)** What is the purpose of using `filter()` in data wrangling with `dplyr`?
+
+A. To remove missing values from all columns.  
+B. To select specific columns by name.  
+C. To remove duplicate rows from a dataset.  
+D. To return only rows that meet a certain condition.
+
+---
+
+**(2.2)** What is the result of using the `mutate()` function in a `dplyr` pipeline?
+
+A. It permanently deletes rows that contain NA values.  
+B. It creates new columns or modifies existing ones.  
+C. It filters the dataset by logical conditions.  
+D. It combines multiple columns into one.
+
+---
+
+**(2.3)** What does the following code do in the context of the `spotify_by_genre` dataset?
+
+```r
+spotify |>
+mutate(high_acoustic_mellow = acousticness > 0.8 & valence < 0.4)
+```
+
+A. It filters the dataset to only include mellow and acoustic songs.  
+B. It creates a new variable indicating whether a song is both highly acoustic and low in valence.  
+C. It summarizes acousticness and valence for mellow songs.  
+D. It creates a histogram of acousticness for songs with low valence.
+
+---
+
+**(2.4)** What is the effect of `pivot_longer()` on a dataset?
+
+A. It removes NA values from multiple columns.  
+B. It splits a character column into multiple columns.  
+C. It summarizes grouped values into wider format tables.  
+D. It transforms columns into key-value pairs, increasing the number of rows.
+
+---
+
+**(2.5)** Why is `janitor::clean_names()` helpful in the data cleaning process?
+
+A. It changes all character variables to numeric format.  
+B. It fills in missing values in your dataset.  
+C. It converts messy column names to consistent, lowercase, snake_case format.  
+D. It rearranges the rows of the dataset based on alphabetical order.
+
+---
+
+<!--
+
+### Session 2 Review Question Answers
+
+**(2.1)** What is the purpose of using `filter()` in data wrangling with `dplyr`?  
+
+**Correct Answer:**  
+D. To return only rows that meet a certain condition.
+
+**Explanation:**  
+`filter()` keeps rows based on a logical condition, helping narrow your dataset to just what you're interested in analyzing.
+
+---
+
+**(2.2)** What is the result of using the `mutate()` function in a `dplyr` pipeline? 
+
+**Correct Answer:**  
+B. It creates new columns or modifies existing ones.
+
+**Explanation:**  
+`mutate()` allows you to add or alter columns using logic, math, or transformations, making it essential for feature engineering.
+
+---
+
+**(2.3)** What does the following code do in the context of the `spotify_by_genre` dataset?
+
+```r
+spotify |>
+mutate(high_acoustic_mellow = acousticness > 0.8 & valence < 0.4)
+```
+
+**Correct Answer:**  
+B. It creates a new variable indicating whether a song is both highly acoustic and low in valence.
+
+**Explanation:**  
+This code adds a new logical column called `high_acoustic_mellow`, which is `TRUE` if the song’s `acousticness` is greater than 0.8 **and** its `valence` is less than 0.4—capturing songs that are both acoustic and emotionally mellow.
+
+---
+
+**(2.4)** What is the effect of `pivot_longer()` on a dataset?  
+
+**Correct Answer:**  
+D. It transforms columns into key-value pairs, increasing the number of rows.
+
+**Explanation:**  
+`pivot_longer()` reshapes wide data into long format, useful for tidy plotting and modeling.
+
+---
+
+**(2.5)** Why is `janitor::clean_names()` helpful in the data cleaning process?  
+
+**Correct Answer:**  
+C. It converts messy column names to consistent, lowercase, snake_case format.
+
+**Explanation:**  
+This function simplifies variable names by removing special characters and spaces, making them easier to reference in code.
+
+---
+
+-->
+
+## Session 3: Managing Dates, Strings, and Categories
+
+### 21. Working with strings using `stringr`
+
+```{r}
+library(stringr)
+
+# Create a new column that counts the number of characters in each track name
+# Then display the track names sorted by length in descending order
+spotify |>
+  mutate(name_length = str_length(track_name)) |>
+  select(track_name, name_length) |>
+  arrange(desc(name_length)) 
+```
+
+```{r}
+# Detect songs where the title includes the word "love" (case-insensitive)
+# Use str_to_lower to ensure consistent matching
+(
+  love_songs <- spotify |>
+    filter(str_detect(str_to_lower(track_name), "love")) |>
+    select(track_genre, track_name)
+)
+```
+
+```{r}
+# Count how many "love" songs appear in each genre
+# Calculate the percentage of total songs that mention "love" for each genre
+love_songs |>
+  mutate(love = 1) |>
+  group_by(track_genre) |>
+  summarize(n_love = sum(love)) |>
+  ungroup() |>
+  mutate(pct_love = n_love / nrow(spotify) * 100) |>
+  arrange(desc(pct_love))
+```
+
+- We use `str_length()` to measure the number of characters in each song title, helping us identify especially long or short track names.  
+- Sorting by `name_length` reveals songs with the most elaborate titles.  
+- `str_detect()` finds tracks that contain the word “love” in the title, using `str_to_lower()` to ensure case-insensitive matching.  
+- This lets us explore themes in the data—like how often love appears in song titles.  
+- We add a flag (`love = 1`) to count and summarize how many love-themed songs exist in each genre.  
+- Calculating percentages gives insight into which genres most frequently use “love” in their track titles relative to the full dataset.
+
+### 22. Extracting and replacing substrings
+
+```{r}
+# Remove all parentheses from track names
+spotify |>
+  mutate(track_name_clean = str_remove_all(track_name, "\\(.*?\\)")) |>
+  select(track_name, track_name_clean)
+```
+
+```{r}
+# Extract featured artist from parentheses
+spotify |>
+  mutate(featuring = str_extract(
+    track_name, 
+    "(?i)(?<=\\()(with|feat\\.)[^)]*(?=\\))")) |>
+  select(track_name, featuring) |>
+  mutate(featuring = str_replace_all(featuring, "with |feat. ", "")) |> 
+  filter(!is.na(featuring))
+```
+
+- We use `str_remove_all()` with a non-greedy regex to remove any text in parentheses from song titles, creating a cleaner version of `track_name`.  
+- The regex `"\\(.*?\\)"` ensures only the text inside the **first** set of parentheses is removed, not everything between the first `(` and the last `)`.  
+- This cleaning step is useful for removing remix labels or featured artist notes for clearer display or grouping.  
+- In the second block, we use `str_extract()` to **pull out featured artist names** from parentheses that include "with" or "feat."  
+- The use of lookarounds `(?<=\\()` and `(?=\\))` ensures we extract the content inside the parentheses **without including the parentheses themselves**.  
+- After extracting, we strip out "with " or "feat. " using `str_replace_all()` to leave just the artist names, which can be helpful for analyzing collaborations.
+
+### 23. Wrangling artists into long format
+
+```{r}
+# Use separate_rows() to split multiple artists into individual rows
+# This turns collaborations into separate entries for each artist
+(
+  artists_long <- spotify |>
+    tidyr::separate_rows(artists, sep = ";")
+)
+```
+
+```{r}
+# Count how many times each artist appears across all tracks
+# Artists involved in collaborations will be counted multiple times
+artists_long |> 
+  count(artists, sort = TRUE)
+```
+
+- We use `separate_rows()` to split the `artists` column into multiple rows whenever songs have more than one artist listed.  
+- This transformation puts the data in long format, allowing each artist to be analyzed individually—even in collaborations.  
+- All other columns (e.g., track name, genre) are repeated for each artist, preserving context.  
+- Using `count()` on the `artists` column gives us a ranked list of how frequently each artist appears.  
+- This method captures both solo tracks and group efforts, giving a more complete view of artist participation.  
+- It's especially useful for identifying the most active or featured artists in the dataset.
+
+### 24. Cleaning and recoding categories
+
+```{r}
+# Use fct_lump() to group all but the top 3 most common genres into "Other"
+spotify |>
+  mutate(track_genre = forcats::fct_lump(track_genre, n = 3)) |>
+  count(track_genre)
+```
+
+```{r}
+# View the current counts for popular_or_not to check the ordering and distribution
+spotify |> 
+  count(popular_or_not)
+```
+
+```{r}
+# Reorder factor levels for popular_or_not so that "popular" appears first
+spotify |>
+  mutate(popular_or_not = forcats::fct_relevel(popular_or_not, "popular")) |>
+  count(popular_or_not)
+```
+
+- We use `fct_lump()` to combine less common genres into an "Other" category, keeping the focus on the top 3 most frequent ones.  
+- This simplifies plots and summaries by reducing clutter from too many categories.  
+- `count(popular_or_not)` helps us inspect the current distribution and order of that categorical variable.  
+- We use `fct_relevel()` to move `"popular"` to the first position, which can influence plotting order and improve clarity.  
+- Reordering factor levels helps ensure categories appear in a meaningful or intuitive order in visualizations.  
+- These factor tools from the `forcats` package are essential for making categorical variables more analysis- and presentation-friendly.
+
+### 25. Counting words in track names
+
+```{r}
+library(forcats)
+
+# Create a new column that counts the number of words in each track name
+spotify |>
+  mutate(
+    word_count = str_count(track_name, "\\w+")
+  ) |>
+  
+  # Group by genre and calculate the average word count per genre
+  group_by(track_genre) |>
+  summarize(
+    avg_words = mean(word_count, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  
+  # Reorder genres based on average word count for clearer plotting
+  mutate(track_genre = fct_reorder(track_genre, avg_words)) |>
+  
+  # Create a horizontal bar chart of average word counts by genre
+  ggplot(aes(x = track_genre, y = avg_words)) +
+  geom_col(fill = "steelblue") +
+  
+  # Add the rounded average word count at the end of each bar
+  geom_text(aes(label = round(avg_words, 1)), hjust = -0.1, size = 3.5) +
+  
+  # Flip coordinates so genres appear on the y-axis
+  coord_flip() +
+  
+  # Add labels and title
+  labs(
+    title = "Average Number of Words in Track Names by Genre",
+    x = "Track Genre",
+    y = "Average Word Count"
+  ) +
+  
+  # Apply a clean minimal theme
+  theme_minimal()
+```
+
+- We use `str_count()` with the `\\w+` pattern to count the number of words in each track title.  
+- Grouping by `track_genre` and calculating the mean gives us the average word count per genre.  
+- `fct_reorder()` reorders genres based on average word count, improving the readability of the plot.  
+- A horizontal bar chart (`geom_col()` with `coord_flip()`) displays genre comparisons clearly.  
+- `geom_text()` adds numeric labels to each bar, making the values easy to interpret at a glance.  
+- This combines text processing and visualization to uncover stylistic patterns in how songs are titled across genres.
+
+### 26. Checking for artists appearing in multiple genres
+
+```{r}
+library(tidyr)
+
+# Split artists so each appears in their own row (for collaborations)
+spotify |>
+  separate_rows(artists, sep = ";") |>
+  
+  # Keep only distinct artist–genre pairs
+  distinct(artists, track_genre) |>
+  
+  # Group by artist and filter for those appearing in more than one genre
+  group_by(artists) |>
+  filter(n_distinct(track_genre) > 1) |>
+  
+  # Sort alphabetically and display artist–genre combinations
+  arrange(artists) |>
+  select(artists, track_genre)
+```
+
+- We use `separate_rows()` to split collaborations so each artist appears on their own row.  
+- `distinct()` ensures we only keep unique artist–genre pairs, removing duplicates.  
+- Grouping by artist allows us to analyze their genre diversity across tracks.  
+- `filter(n_distinct(track_genre) > 1)` identifies artists who appear in more than one genre.  
+- Sorting and selecting just `artists` and `track_genre` gives a clean view of cross-genre activity.  
+- This technique highlights artist versatility and reveals patterns of collaboration across genres.
+
+### 27. Parsing dates with `lubridate` and `azflights24`
+
+```{r}
+# Load the azflights24 and lubridate packages for flight data and date manipulation
+library(azflights24)
+library(lubridate)
+
+# Preview a random sample of flight records
+flights |> 
+  slice_sample(n = 30)
+```
+
+```{r}
+# Create a proper date column by combining year, month, and day
+(
+  flights_fixed <- flights |>
+    mutate(flight_date = make_date(year, month, day)) |>
+    select(flight, origin, dest, carrier, year, month, day, flight_date)
+)
+```
+
+```{r}
+# Extract the month name (abbreviated) from the flight_date column for PHX-origin flights
+flights |>
+  filter(origin == "PHX") |> 
+  mutate(
+    flight_date = make_date(year, month, day),
+    month_name = month(flight_date, label = TRUE)
+  ) |>
+  count(month_name)
+```
+
+- We use `make_date()` from `lubridate` to combine year, month, and day into a proper `Date` column, simplifying date operations.  
+- Creating a `flight_date` column makes it easier to filter, sort, or extract time-based features.  
+- Using `month(flight_date, label = TRUE)` lets us extract readable, abbreviated month names.  
+- Filtering for flights from Phoenix (`PHX`) helps narrow the focus to a specific origin airport.  
+- `count(month_name)` shows the number of flights from PHX by month, revealing potential seasonal trends.  
+- This workflow highlights how `lubridate` integrates smoothly with tidyverse tools for effective date manipulation and analysis.
+
+### 28. Reordering factors for better visualizations with `forcats` and `ggplot2`
+
+#### Example 1
+
+```{r}
+# Filter for flights that originated in PHX
+# Count how many flights went to each destination
+# Reorder destinations so the bars display in order of frequency
+flights |>
+  filter(origin == "PHX") |>
+  count(dest) |>
+  mutate(dest = forcats::fct_reorder(dest, n)) |>
+  ggplot(aes(x = dest, y = n)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Number of Flights from PHX to Each Destination",
+       x = "Destination", y = "Number of Flights")
+```
+
+```{r}
+# Filter for flights from PHX again
+# Group rare destinations with fewer than 1000 flights into an "Other" category
+# Reorder factor levels by count and visualize as a bar chart
+flights |>
+  filter(origin == "PHX") |>
+  mutate(dest_lumped = forcats::fct_lump_min(
+    dest, min = 1000, other_level = "Other")
+  ) |>
+  count(dest_lumped, name = "n") |>
+  mutate(dest_lumped = fct_reorder(dest_lumped, n)) |>
+  ggplot(aes(x = dest_lumped, y = n)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Number of Flights from PHX to Each Destination",
+    x = "Destination",
+    y = "Number of Flights"
+  )
+```
+
+#### Example 2
+
+```{r}
+# Reorder track genres by the median popularity of their songs
+# Create a violin plot with quantile lines to show distribution
+spotify |>
+  mutate(track_genre = fct_reorder(track_genre, popularity, .fun = median)) |>
+  ggplot(aes(x = track_genre, y = popularity)) +
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) +
+  coord_flip()
+```
+
+- We use `fct_reorder()` to sort bars in descending order of flight count, making plots easier to read and interpret.  
+- `coord_flip()` rotates the bar chart so destinations appear on the y-axis—ideal for longer text labels.  
+- `fct_lump_min()` groups destinations with fewer than 1000 flights into an “Other” category, reducing clutter.  
+- These techniques highlight the most traveled routes from Phoenix while simplifying less important details.  
+- In the second example, we reorder genres by the median popularity of songs to make genre comparisons more meaningful.  
+- Violin plots with quantile lines reveal the distribution and spread of song popularity within each genre, not just the average.
+
+### 29. Interactive line plot of 6-hour wind speed averages
+
+```{r}
+# Prepare weather data for PHX and FLG airports during July 2024
+# Bin timestamps into 6-hour intervals, create human-readable labels
+weather_az_binned <- azflights24::weather |> 
+  filter(origin %in% c("PHX", "FLG")) |> 
+  filter(between(time_hour, ymd("2024-07-01"), ymd("2024-07-31"))) |> 
+  mutate(
+    time_bin_start = floor_date(time_hour, unit = "6 hours"),
+    time_bin_end = time_bin_start + hours(6),
+    label = str_c(
+      wday(time_bin_start, label = TRUE), ", ",
+      month(time_bin_start, label = TRUE), " ",
+      day(time_bin_start), " @ ",
+      strftime(time_bin_start, "%I:%M %p"), "–",
+      strftime(time_bin_end, "%I:%M %p")
+    )
+  ) |> 
+  group_by(origin, time_bin_start, label) |> 
+  summarize(avg_temp = mean(temp, na.rm = TRUE), .groups = "drop") |> 
+  mutate(
+    tooltip_text = str_c(
+      label, "\n",
+      "Avg Temp: ", round(avg_temp, 1), "°F"
+    )
+  )
+```
+
+```{r}
+# Create a ggplot line chart with interactive tooltips using plotly
+p <- ggplot(weather_az_binned, aes(x = time_bin_start, y = avg_temp, 
+                                   text = tooltip_text, group = origin)) +
+  geom_line(aes(color = origin)) +
+  geom_point(color = "black") +
+  labs(
+    title = "Average Temperature in Phoenix and Flagstaff (6-Hour Intervals) for July 2024",
+    x = "July 6-hour Time Bins",
+    y = "Avg Temperature (F)"
+  ) +
+  scale_color_manual(values = c("PHX" = "red", "FLG" = "blue"))
+
+# Render the plot as an interactive Plotly chart with custom tooltips
+plotly::ggplotly(p, tooltip = "text")
+```
+
+- We filter weather data for PHX and FLG airports during July 2024 and group it into 6-hour time bins for clearer trend analysis.  
+- `floor_date()` and `mutate()` help create readable time interval labels, making the timeline easier to interpret.  
+- We calculate average temperature per airport and time bin using `group_by()` and `summarize()`.  
+- Tooltips are customized using `str_c()` to show detailed labels when hovering over data points.  
+- `geom_line()` creates a line for each airport, and `geom_point()` adds black markers to highlight individual values.  
+- `ggplotly()` transforms the static plot into an interactive chart, allowing dynamic exploration of temporal weather trends.
+
+### 30. Summarizing weather app preferences by region
+
+```{r}
+# Load survey data on weather app preferences from the fivethirtyeight package
+data("weather_check", package = "fivethirtyeight")
+
+# Prepare the data by filtering out missing values
+# Lump less common weather sources into "Other"
+# Reorder regions based on frequency of responses
+grouped_responses <- weather_check |>
+  filter(!is.na(weather_source), !is.na(region)) |>
+  mutate(
+    weather_source = fct_lump(weather_source, n = 4),
+    region = fct_infreq(region)
+  ) |>
+  count(region, weather_source) |>
+  arrange(region, desc(n))
+```
+
+```{r}
+# Create a side-by-side bar plot showing weather source preferences by region
+ggplot(grouped_responses, aes(x = region, y = n, fill = weather_source)) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  labs(
+    title = "Weather App Preferences by Region",
+    x = "Weather Source",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+
+- We load and clean the `weather_check` dataset by filtering out missing values for `weather_source` and `region`.  
+- `fct_lump()` groups less common weather apps into an "Other" category to simplify the plot.  
+- `fct_infreq()` reorders regions by how frequently they appear in the data, improving readability.  
+- We use `count()` to tally the number of responses for each combination of region and weather source.  
+- A side-by-side bar plot (`geom_col(position = "dodge")`) compares weather app preferences across regions.  
+- `coord_flip()` rotates the chart, making long region names easier to read and the overall plot more user-friendly.
+
+---
+
+### Session 3 Review Questions
+
+**`(3.1)`** Why does the regex pattern `"\\(.*?\\)"` used in `str_remove_all()` work better than `"\\(.*\\)"` when cleaning track names?
+
+A. The `.*?` forces R to skip anything in parentheses rather than match it.  
+B. `.*?` is a greedy matcher that ensures the longest match possible is removed.  
+C. `"\\(.*?\\)"` only works when the parentheses are numeric, like `(1)` or `(2)`.
+D. `.*?` makes the match non-greedy, stopping at the first closing parenthesis.  
+
+---
+
+**`(3.2)`** What does this code return?
+
+```r
+spotify |>
+  separate_rows(artists, sep = ";") |>
+  distinct(artists, track_genre) |>
+  group_by(artists) |>
+  filter(n_distinct(track_genre) > 1)
+```
+
+A. It returns artists who appear in more than one track.  
+B. It returns tracks that are associated with more than one genre.  
+C. It returns genres that feature more than one artist.  
+D. It returns artists that appear in more than one genre.
+
+---
+
+**`(3.3)`** What will the following code produce?
+
+```r
+spotify |>
+  mutate(track_name_clean = str_remove_all(track_name, "\\(.*?\\)")) |>
+  select(track_name, track_name_clean)
+```
+
+A. A data frame with only tracks that contain parentheses in their names  
+B. A new column with all track names replaced by text inside parentheses  
+C. A new column where all content inside parentheses has been removed from track names  
+D. A subset of songs where all punctuation has been stripped from the track name
+
+---
+
+**`(3.4)`** Which of the following best explains the use of `fct_lump(track_genre, n = 3)`?
+
+A. It removes the three most frequent levels in the `track_genre` factor.  
+B. It converts the `track_genre` variable into numeric rank based on popularity.  
+C. It keeps only the top three most common genres and lumps the rest into "Other".  
+D. It randomly selects three genres to collapse into one category.
+
+---
+
+**`(3.5)`** What does this `ggplot()` show?
+
+```r
+spotify |>
+mutate(track_genre = fct_reorder(track_genre, popularity, .fun = max)) |>
+ggplot(aes(x = track_genre, y = popularity)) +
+geom_violin()
+```
+
+A. A violin plot sorted alphabetically by genre name  
+B. A violin plot of genre popularity, with genres ordered by max popularity  
+C. A violin plot of max track length across genres  
+D. A histogram showing popularity grouped by genre
+
+<!--
+---
+
+
+### Session 3 Review Question Answers
+
+**`(3.1)`** Why does the regex pattern `"\\(.*?\\)"` used in `str_remove_all()` work better than `"\\(.*\\)"` when cleaning track names?  
+
+**Correct Answer:**  
+D. `.*?` makes the match non-greedy, stopping at the first closing parenthesis.
+
+**Explanation:**  
+The `.*?` part tells the regex engine to match as little as possible. This avoids removing everything between the first opening and the last closing parenthesis, which `.*` (greedy) would do.
+
+---
+
+**`(3.2)`** What does this code return?  
+
+**Correct Answer:**  
+D. It returns artists that appear in more than one genre.
+
+**Explanation:**  
+The code first separates artists into rows, then finds unique artist–genre pairs, and filters for those where an artist is associated with more than one genre.
+
+---
+
+**`(3.3)`** What will the following code produce?  
+
+**Correct Answer:**  
+C. A new column where all content inside parentheses has been removed from track names
+
+**Explanation:**  
+The regex removes text (and parentheses themselves) like `(Remix)` or `(feat. Someone)` using a non-greedy match. The cleaned result is stored in a new column.
+
+---
+
+**`(3.4)`** Which of the following best explains the use of `fct_lump(track_genre, n = 3)`?  
+
+**Correct Answer:**  
+C. It keeps only the top three most common genres and lumps the rest into "Other".
+
+**Explanation:**  
+`fct_lump()` simplifies a categorical variable by collapsing less frequent levels into one "Other" category, keeping only the top `n` most common.
+
+---
+
+**`(3.5)`** What does this `ggplot()` show?
+
+```r
+spotify |>
+mutate(track_genre = fct_reorder(track_genre, popularity, .fun = max)) |>
+ggplot(aes(x = track_genre, y = popularity)) +
+geom_violin()
+```
+
+**Correct Answer:**  
+B. A violin plot of genre popularity, with genres ordered by max popularity  
+
+**Explanation:**  
+`fct_reorder()` reorders the factor levels by maximum popularity. The violin plot then visualizes the distribution of popularity for each genre in this new order.
+
+-->

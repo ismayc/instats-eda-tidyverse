@@ -1,0 +1,62 @@
+## Revisiting the EDA Process
+
+- EDA is a structured way to explore and understand your data  
+- In this case study, we will follow three major stages:  
+  - **Load and clean**: standardize column names, check for missing values  
+  - **Understand structure**: explore variable types, counts, and summaries  
+  - **Uncover patterns**: relationships between traits, grouped summaries, and visualizations  
+
+::: {.notes}
+This case study brings together everything we've learned. From the first step of loading the data and cleaning it with `clean_names()`, we move through the classic stages of EDA.
+
+We check for missing values, understand the types of variables (categorical vs numeric), and use summaries and plots to start uncovering trends.
+
+The goal? Go from raw, messy data to insight-ready structure—and along the way, build questions and hypotheses about what we’re seeing.
+:::
+
+---
+
+## Core EDA Tools in Action
+
+- Use `janitor`, `dplyr`, `tidyr`, and `purrr` for transformation and summaries  
+- Use `ggplot2` and `plotly` to visualize structure, relationships, and distributions  
+- Revisit key functions (and many more!):  
+  - `summarize()`, `mutate()`, `pivot_longer()`  
+  - `group_by()`, `count()`, `map_df()`  
+  - `ggplot()`, `plot_ly()`, `ggplotly()`  
+
+::: {.notes}
+This case study gives us a chance to apply all the tools we've learned:
+
+- `janitor::clean_names()` for cleaning,  
+- `summarize()` and `map()` for summarizing,  
+- `ggplot()` and `plot_ly()` for visual storytelling.
+
+You’ve seen these in isolation—but together, they build a full EDA pipeline. You now know how to explore data from scratch using tidyverse tools.
+:::
+
+---
+
+## Thinking with Data: From Traits to Trends
+
+- Categorical traits → use bar charts and counts  
+- Numeric traits  → use histograms and boxplots  
+- Combined views → use grouped or faceted plots  
+- Always return to EDA’s key questions:  
+  - What’s typical?  
+  - What’s unusual?  
+  - What varies across groups?
+
+::: {.notes}
+We'll get revisit fundamental visual patterns:
+
+- **Bar charts** for counts  
+- **Boxplots** for comparisons  
+- **Facets** to explore multiple groups simultaneously
+
+Each visual tells a story—but only if you ask the right questions. EDA is about being curious: What’s common? What’s different? What’s worth digging into?
+
+This case study will hopefully show that even with complex data, the same principles apply.
+:::
+
+---

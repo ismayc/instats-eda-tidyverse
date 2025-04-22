@@ -1,0 +1,10 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.DS_Store
+.Rprofile
+
+/.quarto/
+answers/day1_walkthrough_answers_with_notes.qmd
+answers/day2_walkthrough_answers_with_notes.qmd

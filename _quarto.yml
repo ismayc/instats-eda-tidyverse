@@ -1,0 +1,26 @@
+project:
+  output-dir: docs/
+  type: website
+  render:
+    - index.qmd
+    - slides.qmd
+    - walkthroughs.qmd
+    - answers.qmd
+    - answers/
+
+format:
+    html:
+      theme: cosmo  # Choose a Bootstrap theme or customize as needed
+      toc: true
+
+website:
+  navbar:
+    title: "Exploratory Data Analysis in R with the tidyverse with Dr. Chester Ismay"
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "Walkthroughs"
+        href: walkthroughs.qmd        
+      - text: "Slides"
+        href: slides.qmd
+
