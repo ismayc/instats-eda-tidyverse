@@ -6,8 +6,8 @@ Instats by Dr. Chester Ismay
 To get going make sure to install the following R packages first:
 
 ```r
-packages <- c("moderndive", "knitr", "janitor", "plotly", "dplyr", "ggplot2",
-              "tidyr", "stringr", "forcats", "lubridate", "purrr")
+packages <- c("moderndive", "fivethirtyeight", "knitr", "janitor", "plotly",
+              "dplyr", "ggplot2", "tidyr", "stringr", "forcats", "lubridate", "purrr")
 
 install.packages(packages, repos = "https://cran.rstudio.com")
 ```
@@ -17,7 +17,7 @@ different operating systems, you can install the very large `tidyverse` package
 instead for some of the packages above:
 
 ```r
-packages_revised <- c("moderndive", "knitr", "janitor", "plotly", "tidyverse")
+packages_revised <- c("moderndive", "fivethirtyeight", "knitr", "janitor", "plotly", "tidyverse")
 
 install.packages(packages_revised, repos = "https://cran.rstudio.com")
 ```
