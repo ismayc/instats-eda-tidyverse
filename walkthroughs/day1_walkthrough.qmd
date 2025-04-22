@@ -335,9 +335,10 @@ D. To create visualizations for each genre using ggplot2
 ### 19. Cleaning up with `janitor`
 
 ```{r}
+#| eval: false
 # Simulate messy column names by renaming clean ones to include emojis, symbols, and inconsistent formatting
 spotify_unruly <- spotify |>
-  rename(
+  dplyr::rename(
     `Track Name 🎵` = track_name,
     `ARTISTS (main + featured)` = artists,
     `Album-Name___v2` = album_name,
@@ -347,7 +348,7 @@ spotify_unruly <- spotify |>
     `Explicit?` = explicit,
     `IS_IT_POPULAR????` = popular_or_not
   ) |> 
-  mutate(valence = NA_real_)  # Add an entirely empty column to test janitor functions
+  dplyr::mutate(valence = NA_real_)  # Add an entirely empty column to test janitor functions
 
 # Check the column names and dimensions before cleaning
 

@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.40">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dr.&nbsp;Chester Ismay">
+
+<title>Exploratory Data Analysis in R with the tidyverse</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="day1_walkthrough_files/libs/clipboard/clipboard.min.js"></script>
+<script src="day1_walkthrough_files/libs/quarto-html/quarto.js"></script>
+<script src="day1_walkthrough_files/libs/quarto-html/popper.min.js"></script>
+<script src="day1_walkthrough_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="day1_walkthrough_files/libs/quarto-html/anchor.min.js"></script>
+<link href="day1_walkthrough_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="day1_walkthrough_files/libs/quarto-html/quarto-syntax-highlighting-549806ee2085284f45b00abea8c6df48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="day1_walkthrough_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="day1_walkthrough_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="day1_walkthrough_files/libs/bootstrap/bootstrap-973236bd072d72a04ee9cd82dcc9cb29.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Contents</h2>
+   
+  <ul>
+  <li><a href="#day-1-exploring-cleaning-and-organizing-data" id="toc-day-1-exploring-cleaning-and-organizing-data" class="nav-link active" data-scroll-target="#day-1-exploring-cleaning-and-organizing-data">Day 1: Exploring, Cleaning, and Organizing Data</a>
+  <ul class="collapse">
+  <li><a href="#session-1-foundations-of-eda-in-r-with-the-tidyverse" id="toc-session-1-foundations-of-eda-in-r-with-the-tidyverse" class="nav-link" data-scroll-target="#session-1-foundations-of-eda-in-r-with-the-tidyverse">Session 1: Foundations of EDA in R with the tidyverse</a>
+  <ul class="collapse">
+  <li><a href="#installing-the-necessary-packages" id="toc-installing-the-necessary-packages" class="nav-link" data-scroll-target="#installing-the-necessary-packages">1: Installing the necessary packages</a></li>
+  <li><a href="#loading-the-tidyverse-and-data" id="toc-loading-the-tidyverse-and-data" class="nav-link" data-scroll-target="#loading-the-tidyverse-and-data">2. Loading the tidyverse and data</a></li>
+  <li><a href="#viewing-the-data" id="toc-viewing-the-data" class="nav-link" data-scroll-target="#viewing-the-data">3. Viewing the data</a></li>
+  <li><a href="#remove-songs-listed-multiple-times-in-the-data" id="toc-remove-songs-listed-multiple-times-in-the-data" class="nav-link" data-scroll-target="#remove-songs-listed-multiple-times-in-the-data">4. Remove songs listed multiple times in the data</a></li>
+  <li><a href="#take-a-random-sample-of-the-data" id="toc-take-a-random-sample-of-the-data" class="nav-link" data-scroll-target="#take-a-random-sample-of-the-data">5. Take a random sample of the data</a></li>
+  <li><a href="#spot-checking-unique-genres" id="toc-spot-checking-unique-genres" class="nav-link" data-scroll-target="#spot-checking-unique-genres">6. Spot-checking unique genres</a></li>
+  <li><a href="#checking-for-missing-values" id="toc-checking-for-missing-values" class="nav-link" data-scroll-target="#checking-for-missing-values">7. Checking for missing values</a></li>
+  <li><a href="#identifying-numeric-vs-categorical-variables" id="toc-identifying-numeric-vs-categorical-variables" class="nav-link" data-scroll-target="#identifying-numeric-vs-categorical-variables">8. Identifying numeric vs categorical variables</a></li>
+  <li><a href="#creating-summary-tables" id="toc-creating-summary-tables" class="nav-link" data-scroll-target="#creating-summary-tables">9. Creating summary tables</a></li>
+  <li><a href="#quick-plot-of-distribution" id="toc-quick-plot-of-distribution" class="nav-link" data-scroll-target="#quick-plot-of-distribution">10. Quick plot of distribution</a></li>
+  <li><a href="#session-1-review-questions" id="toc-session-1-review-questions" class="nav-link" data-scroll-target="#session-1-review-questions">Session 1 Review Questions</a></li>
+  </ul></li>
+  <li><a href="#session-2-data-cleaning-fundamentals-with-dplyr-tidyr-and-janitor" id="toc-session-2-data-cleaning-fundamentals-with-dplyr-tidyr-and-janitor" class="nav-link" data-scroll-target="#session-2-data-cleaning-fundamentals-with-dplyr-tidyr-and-janitor">Session 2: Data Cleaning Fundamentals with <code>dplyr</code>, <code>tidyr</code>, and <code>janitor</code></a>
+  <ul class="collapse">
+  <li><a href="#filtering-and-selecting-columns" id="toc-filtering-and-selecting-columns" class="nav-link" data-scroll-target="#filtering-and-selecting-columns">11. Filtering and selecting columns</a></li>
+  <li><a href="#creating-conditional-flags" id="toc-creating-conditional-flags" class="nav-link" data-scroll-target="#creating-conditional-flags">12. Creating conditional flags</a></li>
+  <li><a href="#creating-new-columns-with-mutate" id="toc-creating-new-columns-with-mutate" class="nav-link" data-scroll-target="#creating-new-columns-with-mutate">13. Creating new columns with <code>mutate()</code></a></li>
+  <li><a href="#grouping-and-summarizing" id="toc-grouping-and-summarizing" class="nav-link" data-scroll-target="#grouping-and-summarizing">14. Grouping and summarizing</a></li>
+  <li><a href="#wide-to-long-with-tidyrpivot_longer" id="toc-wide-to-long-with-tidyrpivot_longer" class="nav-link" data-scroll-target="#wide-to-long-with-tidyrpivot_longer">15. Wide to long with <code>tidyr::pivot_longer()</code></a></li>
+  <li><a href="#long-to-wide-with-tidyrpivot_wider" id="toc-long-to-wide-with-tidyrpivot_wider" class="nav-link" data-scroll-target="#long-to-wide-with-tidyrpivot_wider">16. Long to wide with <code>tidyr::pivot_wider()</code></a></li>
+  <li><a href="#splitting-a-column-into-multiple-parts-with-tidyrseparate" id="toc-splitting-a-column-into-multiple-parts-with-tidyrseparate" class="nav-link" data-scroll-target="#splitting-a-column-into-multiple-parts-with-tidyrseparate">17. Splitting a column into multiple parts with <code>tidyr::separate()</code></a></li>
+  <li><a href="#uniting-columns" id="toc-uniting-columns" class="nav-link" data-scroll-target="#uniting-columns">18. Uniting columns</a></li>
+  <li><a href="#cleaning-up-with-janitor" id="toc-cleaning-up-with-janitor" class="nav-link" data-scroll-target="#cleaning-up-with-janitor">19. Cleaning up with <code>janitor</code></a></li>
+  <li><a href="#reordering-and-recoding-variables" id="toc-reordering-and-recoding-variables" class="nav-link" data-scroll-target="#reordering-and-recoding-variables">20. Reordering and recoding variables</a></li>
+  <li><a href="#session-2-review-questions" id="toc-session-2-review-questions" class="nav-link" data-scroll-target="#session-2-review-questions">Session 2 Review Questions</a></li>
+  </ul></li>
+  <li><a href="#session-3-managing-dates-strings-and-categories" id="toc-session-3-managing-dates-strings-and-categories" class="nav-link" data-scroll-target="#session-3-managing-dates-strings-and-categories">Session 3: Managing Dates, Strings, and Categories</a>
+  <ul class="collapse">
+  <li><a href="#working-with-strings-using-stringr" id="toc-working-with-strings-using-stringr" class="nav-link" data-scroll-target="#working-with-strings-using-stringr">21. Working with strings using <code>stringr</code></a></li>
+  <li><a href="#extracting-and-replacing-substrings" id="toc-extracting-and-replacing-substrings" class="nav-link" data-scroll-target="#extracting-and-replacing-substrings">22. Extracting and replacing substrings</a></li>
+  <li><a href="#wrangling-artists-into-long-format" id="toc-wrangling-artists-into-long-format" class="nav-link" data-scroll-target="#wrangling-artists-into-long-format">23. Wrangling artists into long format</a></li>
+  <li><a href="#cleaning-and-recoding-categories" id="toc-cleaning-and-recoding-categories" class="nav-link" data-scroll-target="#cleaning-and-recoding-categories">24. Cleaning and recoding categories</a></li>
+  <li><a href="#counting-words-in-track-names" id="toc-counting-words-in-track-names" class="nav-link" data-scroll-target="#counting-words-in-track-names">25. Counting words in track names</a></li>
+  <li><a href="#checking-for-artists-appearing-in-multiple-genres" id="toc-checking-for-artists-appearing-in-multiple-genres" class="nav-link" data-scroll-target="#checking-for-artists-appearing-in-multiple-genres">26. Checking for artists appearing in multiple genres</a></li>
+  <li><a href="#parsing-dates-with-lubridate-and-azflights24" id="toc-parsing-dates-with-lubridate-and-azflights24" class="nav-link" data-scroll-target="#parsing-dates-with-lubridate-and-azflights24">27. Parsing dates with <code>lubridate</code> and <code>azflights24</code></a></li>
+  <li><a href="#reordering-factors-for-better-visualizations-with-forcats-and-ggplot2" id="toc-reordering-factors-for-better-visualizations-with-forcats-and-ggplot2" class="nav-link" data-scroll-target="#reordering-factors-for-better-visualizations-with-forcats-and-ggplot2">28. Reordering factors for better visualizations with <code>forcats</code> and <code>ggplot2</code></a></li>
+  <li><a href="#interactive-line-plot-of-6-hour-wind-speed-averages" id="toc-interactive-line-plot-of-6-hour-wind-speed-averages" class="nav-link" data-scroll-target="#interactive-line-plot-of-6-hour-wind-speed-averages">29. Interactive line plot of 6-hour wind speed averages</a></li>
+  <li><a href="#summarizing-weather-app-preferences-by-region" id="toc-summarizing-weather-app-preferences-by-region" class="nav-link" data-scroll-target="#summarizing-weather-app-preferences-by-region">30. Summarizing weather app preferences by region</a></li>
+  <li><a href="#session-3-review-questions" id="toc-session-3-review-questions" class="nav-link" data-scroll-target="#session-3-review-questions">Session 3 Review Questions</a></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Exploratory Data Analysis in R with the <code>tidyverse</code></h1>
+<p class="subtitle lead">Day 1 Walkthrough</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dr.&nbsp;Chester Ismay </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="day-1-exploring-cleaning-and-organizing-data" class="level1">
+<h1>Day 1: Exploring, Cleaning, and Organizing Data</h1>
+<section id="session-1-foundations-of-eda-in-r-with-the-tidyverse" class="level2">
+<h2 class="anchored" data-anchor-id="session-1-foundations-of-eda-in-r-with-the-tidyverse">Session 1: Foundations of EDA in R with the tidyverse</h2>
+<section id="installing-the-necessary-packages" class="level3">
+<h3 class="anchored" data-anchor-id="installing-the-necessary-packages">1: Installing the necessary packages</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a vector of package names needed for this course</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"moderndive"</span>,          <span class="co"># For tidyverse-based data analysis tools and datasets</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"fivethirtyeight"</span>,     <span class="co"># Contains curated datasets from FiveThirtyEight.com</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"knitr"</span>,               <span class="co"># For formatting outputs and rendering R Markdown documents</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"janitor"</span>,             <span class="co"># For cleaning data and column names easily</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"plotly"</span>,              <span class="co"># For creating interactive visualizations</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"dplyr"</span>,               <span class="co"># For data wrangling: filter(), mutate(), summarize(), etc.</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ggplot2"</span>,             <span class="co"># For static data visualizations using the grammar of graphics</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"tidyr"</span>,               <span class="co"># For tidying and reshaping data</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"stringr"</span>,             <span class="co"># For working with strings using consistent functions</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"forcats"</span>,             <span class="co"># For working with factors (especially useful with categorical variables)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"lubridate"</span>,           <span class="co"># For working with date and time data</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"purrr"</span>)               <span class="co"># For functional programming tools to iterate and map over data</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Install all the packages listed above from CRAN using a reliable mirror</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(packages, <span class="at">repos =</span> <span class="st">"https://cran.rstudio.com"</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Alternative: You could install a bundled version of these packages using the tidyverse meta-package</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># packages_revised &lt;- c(</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">#   "moderndive", "fivethirtyeight", "knitr", "janitor", "plotly", </span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co">#   "tidyverse")  # This includes ggplot2, dplyr, tidyr, stringr, forcats, purrr, etc.</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages(packages_revised, repos = "https://cran.rstudio.com")</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Install the azflights24 package from GitHub (not available on CRAN)</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">"remotes"</span>)  <span class="co"># Make sure the remotes package is available</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">"moderndive/azflights24"</span>)  <span class="co"># Install from GitHub directly</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="loading-the-tidyverse-and-data" class="level3">
+<h3 class="anchored" data-anchor-id="loading-the-tidyverse-and-data">2. Loading the tidyverse and data</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load packages we will need</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># I'll try to be explicit with using :: as we get started though so</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># you know which package includes the function used.</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the spotify_by_genre dataset from the moderndive package</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="viewing-the-data" class="level3">
+<h3 class="anchored" data-anchor-id="viewing-the-data">3. Viewing the data</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># View the structure of the dataset including variable types and example values</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Open the dataset in a spreadsheet-style viewer (interactive, only works in RStudio)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="remove-songs-listed-multiple-times-in-the-data" class="level3">
+<h3 class="anchored" data-anchor-id="remove-songs-listed-multiple-times-in-the-data">4. Remove songs listed multiple times in the data</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove duplicate songs based on the track_name column</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># .keep_all = TRUE keeps the first full row for each unique track_name</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># View the resulting cleaned dataset</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="take-a-random-sample-of-the-data" class="level3">
+<h3 class="anchored" data-anchor-id="take-a-random-sample-of-the-data">5. Take a random sample of the data</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set a random seed so results are reproducible</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Take a random sample of 10 rows from the full dataset</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Take a random sample of 10 rows but focus only on selected columns</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="spot-checking-unique-genres" class="level3">
+<h3 class="anchored" data-anchor-id="spot-checking-unique-genres">6. Spot-checking unique genres</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Count the number of tracks in each genre and sort from most to least</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="checking-for-missing-values" class="level3">
+<h3 class="anchored" data-anchor-id="checking-for-missing-values">7. Checking for missing values</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># For each column, count how many missing (NA) values there are</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="identifying-numeric-vs-categorical-variables" class="level3">
+<h3 class="anchored" data-anchor-id="identifying-numeric-vs-categorical-variables">8. Identifying numeric vs categorical variables</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the class of the entire dataset (it's a tibble/data frame)</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the class of a specific column: track_genre (should be character or factor)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the class of a numeric column: popularity (should be numeric or integer)</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Use purrr::map_dfr() to apply class() to every column and return results as a data frame</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Glimpse the result for a readable, wide-format view of column types</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="creating-summary-tables" class="level3">
+<h3 class="anchored" data-anchor-id="creating-summary-tables">9. Creating summary tables</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use dplyr to compute common summary statistics for the popularity column</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># (mean, median, and standard deviation)</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Use moderndive's tidy_summary() to get a full summary of one or more columns</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="quick-plot-of-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="quick-plot-of-distribution">10. Quick plot of distribution</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a histogram to visualize the distribution of track popularity scores</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<hr>
+</section>
+<section id="session-1-review-questions" class="level3">
+<h3 class="anchored" data-anchor-id="session-1-review-questions">Session 1 Review Questions</h3>
+<p><strong>(1.1)</strong> Why is Exploratory Data Analysis (EDA) considered a crucial first step in any data science project?</p>
+<p>A. It allows you to train models more quickly.<br>
+B. It helps reveal patterns, identify data issues, and guide analysis decisions.<br>
+C. It replaces the need for data cleaning by automating it.<br>
+D. It transforms all variables into numeric format for modeling.</p>
+<hr>
+<p><strong>(1.2)</strong> What is the role of the <code>distinct()</code> function in preparing your data?</p>
+<p>A. It filters out rows with missing values.<br>
+B. It removes duplicate rows based on selected columns.<br>
+C. It transforms all character variables into factors.<br>
+D. It visualizes the distribution of numeric variables.</p>
+<hr>
+<p><strong>(1.3)</strong> What does the <code>spotify_by_genre</code> dataset contain?</p>
+<p>A. Only audio features from 6,000 classical music tracks<br>
+B. Survey results about Spotify users’ listening habits<br>
+C. Metadata and audio features of 6,000 songs across six genres<br>
+D. Real-time streaming counts of trending tracks globally</p>
+<hr>
+<p><strong>(1.4)</strong> Which function is best used to take a random subset of rows from a dataset?</p>
+<p>A. <code>sample_n()</code><br>
+B. <code>slice_sample()</code><br>
+C. <code>randomize()</code><br>
+D. <code>filter()</code></p>
+<hr>
+<p><strong>(1.5)</strong> What is the purpose of using <code>purrr::map_dfr()</code> in this session?</p>
+<p>A. To count the number of missing values in a column<br>
+B. To classify songs into popular and non-popular categories<br>
+C. To apply a function across all columns and return the results in a single data frame<br>
+D. To create visualizations for each genre using ggplot2</p>
+<hr>
+</section>
+</section>
+<section id="session-2-data-cleaning-fundamentals-with-dplyr-tidyr-and-janitor" class="level2">
+<h2 class="anchored" data-anchor-id="session-2-data-cleaning-fundamentals-with-dplyr-tidyr-and-janitor">Session 2: Data Cleaning Fundamentals with <code>dplyr</code>, <code>tidyr</code>, and <code>janitor</code></h2>
+<section id="filtering-and-selecting-columns" class="level3">
+<h3 class="anchored" data-anchor-id="filtering-and-selecting-columns">11. Filtering and selecting columns</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Select a subset of columns and rename track_genre to genre</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Then take a random sample of 20 rows to explore</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter for only songs with popularity greater than 80</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Select only key identifying columns, randomly sample 20, then </span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># arrange by popularity (descending)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="creating-conditional-flags" class="level3">
+<h3 class="anchored" data-anchor-id="creating-conditional-flags">12. Creating conditional flags</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a new logical column to flag songs with both high energy and </span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># high danceability</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a new categorical column for popularity levels using case_when</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Then count how many songs fall into each category</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="creating-new-columns-with-mutate" class="level3">
+<h3 class="anchored" data-anchor-id="creating-new-columns-with-mutate">13. Creating new columns with <code>mutate()</code></h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a new column that calculates the ratio of energy to danceability</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add a logical column that flags songs with tempo greater than 140 as high tempo</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Then count how many songs fall into each category</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="grouping-and-summarizing" class="level3">
+<h3 class="anchored" data-anchor-id="grouping-and-summarizing">14. Grouping and summarizing</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Group the data by genre and calculate the average energy for each group</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Count how many songs are popular or not within each genre</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="wide-to-long-with-tidyrpivot_longer" class="level3">
+<h3 class="anchored" data-anchor-id="wide-to-long-with-tidyrpivot_longer">15. Wide to long with <code>tidyr::pivot_longer()</code></h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reshape selected audio features from wide format to long format</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co"># This creates a 'feature' column for the variable name and a 'value' </span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co"># column for its value</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="long-to-wide-with-tidyrpivot_wider" class="level3">
+<h3 class="anchored" data-anchor-id="long-to-wide-with-tidyrpivot_wider">16. Long to wide with <code>tidyr::pivot_wider()</code></h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Count the number of songs in each genre by popularity category</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Then reshape the data to have separate columns for 'popular' and 'not popular'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="splitting-a-column-into-multiple-parts-with-tidyrseparate" class="level3">
+<h3 class="anchored" data-anchor-id="splitting-a-column-into-multiple-parts-with-tidyrseparate">17. Splitting a column into multiple parts with <code>tidyr::separate()</code></h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Find the maximum number of artists in any single song by counting semicolons</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Add 1 since semicolons separate the names (n artists = n semicolons + 1)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Identify the song that has the most artists</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a vector of new column names based on the maximum number of artists found</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use separate() to split the 'artists' column into multiple artist columns</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Use fill = "right" to handle cases with fewer than max_artists</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep the original 'artists' column for reference</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarize how many multi-artist songs exist by genre</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="uniting-columns" class="level3">
+<h3 class="anchored" data-anchor-id="uniting-columns">18. Uniting columns</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine the track_name and artists columns into a single column called track_artist</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Use " by " as the separator between the song title and the artist(s)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="cleaning-up-with-janitor" class="level3">
+<h3 class="anchored" data-anchor-id="cleaning-up-with-janitor">19. Cleaning up with <code>janitor</code></h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate messy column names by renaming clean ones to include emojis, symbols, and inconsistent formatting</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>spotify_unruly <span class="ot">&lt;-</span> spotify <span class="sc">|&gt;</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">rename</span>(</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Track Name 🎵</span><span class="st">`</span> <span class="ot">=</span> track_name,</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">ARTISTS (main + featured)</span><span class="st">`</span> <span class="ot">=</span> artists,</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Album-Name___v2</span><span class="st">`</span> <span class="ot">=</span> album_name,</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">DURATION (ms)</span><span class="st">`</span> <span class="ot">=</span> duration_ms,</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Popularity SCORE (%)</span><span class="st">`</span> <span class="ot">=</span> popularity,</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">track genre!</span><span class="st">`</span> <span class="ot">=</span> track_genre,</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Explicit?</span><span class="st">`</span> <span class="ot">=</span> explicit,</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">IS_IT_POPULAR????</span><span class="st">`</span> <span class="ot">=</span> popular_or_not</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">valence =</span> <span class="cn">NA_real_</span>)  <span class="co"># Add an entirely empty column to test janitor functions</span></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the column names and dimensions before cleaning</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Clean the messy column names: make them lowercase, snake_case, and remove special characters</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove any completely empty columns</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the new cleaned column names and dimensions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="reordering-and-recoding-variables" class="level3">
+<h3 class="anchored" data-anchor-id="reordering-and-recoding-variables">20. Reordering and recoding variables</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Move the track_genre column to appear right before track_id</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Recode popular_or_not into a new column popular_recoded using case_match</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Place the new column directly after track_genre</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<hr>
+</section>
+<section id="session-2-review-questions" class="level3">
+<h3 class="anchored" data-anchor-id="session-2-review-questions">Session 2 Review Questions</h3>
+<p><strong>(2.1)</strong> What is the purpose of using <code>filter()</code> in data wrangling with <code>dplyr</code>?</p>
+<p>A. To remove missing values from all columns.<br>
+B. To select specific columns by name.<br>
+C. To remove duplicate rows from a dataset.<br>
+D. To return only rows that meet a certain condition.</p>
+<hr>
+<p><strong>(2.2)</strong> What is the result of using the <code>mutate()</code> function in a <code>dplyr</code> pipeline?</p>
+<p>A. It permanently deletes rows that contain NA values.<br>
+B. It creates new columns or modifies existing ones.<br>
+C. It filters the dataset by logical conditions.<br>
+D. It combines multiple columns into one.</p>
+<hr>
+<p><strong>(2.3)</strong> What does the following code do in the context of the <code>spotify_by_genre</code> dataset?</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>spotify <span class="sc">|&gt;</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">high_acoustic_mellow =</span> acousticness <span class="sc">&gt;</span> <span class="fl">0.8</span> <span class="sc">&amp;</span> valence <span class="sc">&lt;</span> <span class="fl">0.4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>A. It filters the dataset to only include mellow and acoustic songs.<br>
+B. It creates a new variable indicating whether a song is both highly acoustic and low in valence.<br>
+C. It summarizes acousticness and valence for mellow songs.<br>
+D. It creates a histogram of acousticness for songs with low valence.</p>
+<hr>
+<p><strong>(2.4)</strong> What is the effect of <code>pivot_longer()</code> on a dataset?</p>
+<p>A. It removes NA values from multiple columns.<br>
+B. It splits a character column into multiple columns.<br>
+C. It summarizes grouped values into wider format tables.<br>
+D. It transforms columns into key-value pairs, increasing the number of rows.</p>
+<hr>
+<p><strong>(2.5)</strong> Why is <code>janitor::clean_names()</code> helpful in the data cleaning process?</p>
+<p>A. It changes all character variables to numeric format.<br>
+B. It fills in missing values in your dataset.<br>
+C. It converts messy column names to consistent, lowercase, snake_case format.<br>
+D. It rearranges the rows of the dataset based on alphabetical order.</p>
+<hr>
+</section>
+</section>
+<section id="session-3-managing-dates-strings-and-categories" class="level2">
+<h2 class="anchored" data-anchor-id="session-3-managing-dates-strings-and-categories">Session 3: Managing Dates, Strings, and Categories</h2>
+<section id="working-with-strings-using-stringr" class="level3">
+<h3 class="anchored" data-anchor-id="working-with-strings-using-stringr">21. Working with strings using <code>stringr</code></h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a new column that counts the number of characters in each track name</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Then display the track names sorted by length in descending order</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Detect songs where the title includes the word "love" (case-insensitive)</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Use str_to_lower() to ensure consistent matching</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Count how many "love" songs appear in each genre</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate the percentage of total songs that mention "love" for each genre</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="extracting-and-replacing-substrings" class="level3">
+<h3 class="anchored" data-anchor-id="extracting-and-replacing-substrings">22. Extracting and replacing substrings</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove all parentheses from track names</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="wrangling-artists-into-long-format" class="level3">
+<h3 class="anchored" data-anchor-id="wrangling-artists-into-long-format">23. Wrangling artists into long format</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use separate_rows() to split multiple artists into individual rows</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="co"># This turns collaborations into separate entries for each artist</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Count how many times each artist appears across all tracks</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Artists involved in collaborations will be counted multiple times</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="cleaning-and-recoding-categories" class="level3">
+<h3 class="anchored" data-anchor-id="cleaning-and-recoding-categories">24. Cleaning and recoding categories</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use fct_lump() to group all but the top 3 most common genres into "Other"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># View the current counts for popular_or_not to check the ordering and distribution</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reorder factor levels for popular_or_not so that "popular" appears first</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="counting-words-in-track-names" class="level3">
+<h3 class="anchored" data-anchor-id="counting-words-in-track-names">25. Counting words in track names</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a new column that counts the number of words in each track name</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Group by genre and calculate the average word count per genre</span></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Reorder genres based on average word count for clearer plotting</span></span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create a horizontal bar chart of average word counts by genre</span></span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add the rounded average word count at the end of each bar</span></span>
+<span id="cb42-13"><a href="#cb42-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Flip coordinates so genres appear on the y-axis</span></span>
+<span id="cb42-15"><a href="#cb42-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-16"><a href="#cb42-16" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-17"><a href="#cb42-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add labels and title</span></span>
+<span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-20"><a href="#cb42-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Apply a clean minimal theme</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="checking-for-artists-appearing-in-multiple-genres" class="level3">
+<h3 class="anchored" data-anchor-id="checking-for-artists-appearing-in-multiple-genres">26. Checking for artists appearing in multiple genres</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Split artists so each appears in their own row (for collaborations)</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Keep only distinct artist–genre pairs</span></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Group by artist and filter for those appearing in more than one genre</span></span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Sort alphabetically and display artist–genre combinations</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="parsing-dates-with-lubridate-and-azflights24" class="level3">
+<h3 class="anchored" data-anchor-id="parsing-dates-with-lubridate-and-azflights24">27. Parsing dates with <code>lubridate</code> and <code>azflights24</code></h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the azflights24 and lubridate packages for flight data and date manipulation</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Preview a random sample of flight records</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a proper date column by combining year, month, and day</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract the month name (abbreviated) from the flight_date column for PHX-origin flights</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="reordering-factors-for-better-visualizations-with-forcats-and-ggplot2" class="level3">
+<h3 class="anchored" data-anchor-id="reordering-factors-for-better-visualizations-with-forcats-and-ggplot2">28. Reordering factors for better visualizations with <code>forcats</code> and <code>ggplot2</code></h3>
+<section id="example-1" class="level4">
+<h4 class="anchored" data-anchor-id="example-1">Example 1</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter for flights that originated in PHX</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Count how many flights went to each destination</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Reorder destinations so the bars display in order of frequency</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter for flights from PHX again</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Group rare destinations with fewer than 1000 flights into an "Other" category</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Reorder factor levels by count and visualize as a bar chart</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="example-2" class="level4">
+<h4 class="anchored" data-anchor-id="example-2">Example 2</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reorder track genres by the median popularity of their songs</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a violin plot with quantile lines to show distribution</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="interactive-line-plot-of-6-hour-wind-speed-averages" class="level3">
+<h3 class="anchored" data-anchor-id="interactive-line-plot-of-6-hour-wind-speed-averages">29. Interactive line plot of 6-hour wind speed averages</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare weather data for PHX and FLG airports during July 2024</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Bin timestamps into 6-hour intervals, create human-readable labels</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a ggplot line chart with interactive tooltips using plotly</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Render the plot as an interactive Plotly chart with custom tooltips</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="summarizing-weather-app-preferences-by-region" class="level3">
+<h3 class="anchored" data-anchor-id="summarizing-weather-app-preferences-by-region">30. Summarizing weather app preferences by region</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load survey data on weather app preferences from the fivethirtyeight package</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare the data by filtering out missing values</span></span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Lump less common weather sources into "Other"</span></span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Reorder regions based on frequency of responses</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a side-by-side bar plot showing weather source preferences by region</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<hr>
+</section>
+<section id="session-3-review-questions" class="level3">
+<h3 class="anchored" data-anchor-id="session-3-review-questions">Session 3 Review Questions</h3>
+<p><strong><code>(3.1)</code></strong> Why does the regex pattern <code>"\\(.*?\\)"</code> used in <code>str_remove_all()</code> work better than <code>"\\(.*\\)"</code> when cleaning track names?</p>
+<p>A. The <code>.*?</code> forces R to skip anything in parentheses rather than match it.<br>
+B. <code>.*?</code> is a greedy matcher that ensures the longest match possible is removed.<br>
+C. <code>"\\(.*?\\)"</code> only works when the parentheses are numeric, like <code>(1)</code> or <code>(2)</code>. D. <code>.*?</code> makes the match non-greedy, stopping at the first closing parenthesis.</p>
+<hr>
+<p><strong><code>(3.2)</code></strong> What does this code return?</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>spotify <span class="sc">|&gt;</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_rows</span>(artists, <span class="at">sep =</span> <span class="st">";"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(artists, track_genre) <span class="sc">|&gt;</span></span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(artists) <span class="sc">|&gt;</span></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">n_distinct</span>(track_genre) <span class="sc">&gt;</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>A. It returns artists who appear in more than one track.<br>
+B. It returns tracks that are associated with more than one genre.<br>
+C. It returns genres that feature more than one artist.<br>
+D. It returns artists that appear in more than one genre.</p>
+<hr>
+<p><strong><code>(3.3)</code></strong> What will the following code produce?</p>
+<div class="sourceCode" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>spotify <span class="sc">|&gt;</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">track_name_clean =</span> <span class="fu">str_remove_all</span>(track_name, <span class="st">"</span><span class="sc">\\</span><span class="st">(.*?</span><span class="sc">\\</span><span class="st">)"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(track_name, track_name_clean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>A. A data frame with only tracks that contain parentheses in their names<br>
+B. A new column with all track names replaced by text inside parentheses<br>
+C. A new column where all content inside parentheses has been removed from track names<br>
+D. A subset of songs where all punctuation has been stripped from the track name</p>
+<hr>
+<p><strong><code>(3.4)</code></strong> Which of the following best explains the use of <code>fct_lump(track_genre, n = 3)</code>?</p>
+<p>A. It removes the three most frequent levels in the <code>track_genre</code> factor.<br>
+B. It converts the <code>track_genre</code> variable into numeric rank based on popularity.<br>
+C. It keeps only the top three most common genres and lumps the rest into “Other”.<br>
+D. It randomly selects three genres to collapse into one category.</p>
+<hr>
+<p><strong><code>(3.5)</code></strong> What does this <code>ggplot()</code> show?</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>spotify <span class="sc">|&gt;</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">track_genre =</span> <span class="fu">fct_reorder</span>(track_genre, popularity, <span class="at">.fun =</span> max)) <span class="sc">|&gt;</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> track_genre, <span class="at">y =</span> popularity)) <span class="sc">+</span></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_violin</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>A. A violin plot sorted alphabetically by genre name<br>
+B. A violin plot of genre popularity, with genres ordered by max popularity<br>
+C. A violin plot of max track length across genres<br>
+D. A histogram showing popularity grouped by genre</p>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

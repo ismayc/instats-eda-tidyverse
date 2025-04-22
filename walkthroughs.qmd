@@ -8,11 +8,11 @@ available [here](palmtrees_funky.csv).
 The blank notebooks for each day (in Quarto format):
 
 - [Day 1 (Sessions 1-3) Walkthroughs](walkthroughs/day1_walkthrough.qmd)
-- **Day 2 (Sessions 4-6) Walkthroughs** (To be shared after Day 1) <!-- (walkthroughs/day2_walkthrough.qmd) -->
+- [Day 2 (Sessions 4-6) Walkthroughs](walkthroughs/day2_walkthrough.qmd)
 
 The answer keys for each day (in Quarto format):
 
 - [Day 1 (Sessions 1-3) Walkthrough Answers](answers/day1_walkthrough_answers.qmd)
 <!-- - [Day 1 (Sessions 1-3) Exercise Answers](answers/day1_exercise_answers.qmd) -->
-- **Day 2 (Sessions 4-6) Walkthrough Answers** (To be shared after Day 1) <!-- (answers/day2_walkthrough_answers.qmd) -->
+- [Day 2 (Sessions 4-6) Walkthrough Answers](answers/day2_walkthrough_answers.qmd)
 <!-- - [Day 2 (Sessions 4-6) Exercise Answers](answers/day2_exercise_answers.qmd) -->
