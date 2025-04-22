@@ -1,0 +1,73 @@
+name: Build and Deploy Quarto
+
+permissions: 
+  contents: write
+  pages: write
+
+on:
+  push:
+    branches: [main]
+    # paths:
+    #   - "day1_exercise_answers.qmd"
+    #   - "day1_walkthrough_answers.qmd"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      EMAIL: ${{ secrets.EMAIL }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up R
+      uses: r-lib/actions/setup-r@v2
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev   
+    
+    - name: Install dependencies with renv
+      run: Rscript -e 'renv::restore()'
+
+    - name: Check if renv cache directory exists
+      run: |
+        if [ -d "renv/cache" ]; then echo "renv cache directory exists"; else echo "renv cache directory does not exist"; fi    
+        
+    - name: Cache R packages
+      uses: actions/cache@v4
+      with:
+        path: renv/cache
+        key: ${{ runner.os }}-r-${{ hashFiles('renv.lock') }}
+    
+    - name: Install Quarto
+      run: |
+        wget https://github.com/quarto-dev/quarto-cli/releases/download/v1.3.340/quarto-1.3.340-linux-amd64.deb
+        sudo dpkg -i quarto-1.3.340-linux-amd64.deb
+    
+    - name: Create docs folder
+      run: mkdir -p docs
+    
+    - name: Render Quarto files to HTML
+      run: |
+        # quarto render
+        # quarto render answers/day1_walkthrough_answers.qmd
+        quarto render answers/day1_exercise_answers.qmd
+        # quarto render answers/day2_walkthrough_answers.qmd
+        quarto render answers/day2_exercise_answers.qmd
+        # quarto render answers/day3_walkthrough_answers.qmd
+        # quarto render answers/day3_exercise_answers.qmd
+        # quarto render answers/day4_walkthrough_answers.qmd  
+        # quarto render day4_exercise_answers.qmd
+    
+    # Deploy HTML to GitHub Pages if on main or master branch
+    - name: Deploy to GitHub pages from main/master 🚀
+      if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+      uses: JamesIves/github-pages-deploy-action@v4.6.4
+      with:
+        branch: gh-pages
+        folder: docs
+        clean: false
