@@ -398,7 +398,7 @@ D. It combines multiple columns into one.
 
 ```r
 spotify |>
-mutate(high_acoustic_mellow = acousticness > 0.8 & valence < 0.4)
+  mutate(high_acoustic_mellow = acousticness > 0.8 & valence < 0.4)
 ```
 
 A. It filters the dataset to only include mellow and acoustic songs.  
@@ -637,10 +637,10 @@ D. `.*?` makes the match non-greedy, stopping at the first closing parenthesis.
 
 ```r
 spotify |>
-separate_rows(artists, sep = ";") |>
-distinct(artists, track_genre) |>
-group_by(artists) |>
-filter(n_distinct(track_genre) > 1)
+  separate_rows(artists, sep = ";") |>
+  distinct(artists, track_genre) |>
+  group_by(artists) |>
+  filter(n_distinct(track_genre) > 1)
 ```
 
 A. It returns artists who appear in more than one track.  
@@ -654,8 +654,8 @@ D. It returns artists that appear in more than one genre.
 
 ```r
 spotify |>
-mutate(track_name_clean = str_remove_all(track_name, "\\(.*?\\)")) |>
-select(track_name, track_name_clean)
+  mutate(track_name_clean = str_remove_all(track_name, "\\(.*?\\)")) |>
+  select(track_name, track_name_clean)
 ```
 
 A. A data frame with only tracks that contain parentheses in their names  
@@ -678,9 +678,9 @@ D. It randomly selects three genres to collapse into one category.
 
 ```r
 spotify |>
-mutate(track_genre = fct_reorder(track_genre, popularity, .fun = max)) |>
-ggplot(aes(x = track_genre, y = popularity)) +
-geom_violin()
+  mutate(track_genre = fct_reorder(track_genre, popularity, .fun = max)) |>
+  ggplot(aes(x = track_genre, y = popularity)) +
+  geom_violin()
 ```
 
 A. A violin plot sorted alphabetically by genre name  
