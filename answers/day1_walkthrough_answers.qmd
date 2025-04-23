@@ -648,7 +648,7 @@ D. It combines multiple columns into one.
 
 ```r
 spotify |>
-mutate(high_acoustic_mellow = acousticness > 0.8 & valence < 0.4)
+  mutate(high_acoustic_mellow = acousticness > 0.8 & valence < 0.4)
 ```
 
 A. It filters the dataset to only include mellow and acoustic songs.  
@@ -702,7 +702,7 @@ B. It creates new columns or modifies existing ones.
 
 ```r
 spotify |>
-mutate(high_acoustic_mellow = acousticness > 0.8 & valence < 0.4)
+  mutate(high_acoustic_mellow = acousticness > 0.8 & valence < 0.4)
 ```
 
 **Correct Answer:**  
@@ -1183,9 +1183,9 @@ D. It randomly selects three genres to collapse into one category.
 
 ```r
 spotify |>
-mutate(track_genre = fct_reorder(track_genre, popularity, .fun = max)) |>
-ggplot(aes(x = track_genre, y = popularity)) +
-geom_violin()
+  mutate(track_genre = fct_reorder(track_genre, popularity, .fun = max)) |>
+  ggplot(aes(x = track_genre, y = popularity)) +
+  geom_violin()
 ```
 
 A. A violin plot sorted alphabetically by genre name  
@@ -1242,9 +1242,9 @@ C. It keeps only the top three most common genres and lumps the rest into "Other
 
 ```r
 spotify |>
-mutate(track_genre = fct_reorder(track_genre, popularity, .fun = max)) |>
-ggplot(aes(x = track_genre, y = popularity)) +
-geom_violin()
+  mutate(track_genre = fct_reorder(track_genre, popularity, .fun = max)) |>
+  ggplot(aes(x = track_genre, y = popularity)) +
+  geom_violin()
 ```
 
 **Correct Answer:**  
