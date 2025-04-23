@@ -377,7 +377,6 @@ D. Converting grouped data frames into JSON summaries for API output.
 
 ---
 
-<!-- 
 ### Session 4 Review Question Answers
 
 **`(4.1)`** What is the primary benefit of using `map_*()` functions from the **`purrr`** package?  
@@ -424,8 +423,6 @@ While `map()` transforms each list element, `reduce()` is used to combine themâ€
 `imap_lgl()` applies a function to each column (and can use column names), returning a logical vectorâ€”perfect for targeted searches.
 
 ---
-
--->
 
 ## Session 5: Interactive Data Visualization with `plotly`
 
@@ -819,8 +816,6 @@ D. It allows faster computation since each column becomes a numeric vector.
 
 ---
 
-<!--
-
 ### Session 5 Review Question Answers
 
 **`(5.1)`**  
@@ -854,7 +849,6 @@ D. It allows faster computation since each column becomes a numeric vector.
 
 ---
 
--->
 
 ## Session 6: End-to-End Case Study
 

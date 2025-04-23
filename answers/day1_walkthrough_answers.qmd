@@ -293,8 +293,6 @@ D. To create visualizations for each genre using ggplot2
 
 ---
 
-<!--
-
 ### Session 1 Review Question Answers
 
 **(1.1)** Why is Exploratory Data Analysis (EDA) considered a crucial first step in any data science project?  
@@ -346,7 +344,6 @@ C. To apply a function across all columns and return the results in a single dat
 This function was used to inspect the class of each column by mapping `class()` over the dataset and combining the results row-wise.
 
 ---
--->
 
 ## Session 2: Data Cleaning Fundamentals with `dplyr`, `tidyr`, and `janitor`
 
@@ -679,8 +676,6 @@ D. It rearranges the rows of the dataset based on alphabetical order.
 
 ---
 
-<!--
-
 ### Session 2 Review Question Answers
 
 **(2.1)** What is the purpose of using `filter()` in data wrangling with `dplyr`?  
@@ -737,8 +732,6 @@ C. It converts messy column names to consistent, lowercase, snake_case format.
 This function simplifies variable names by removing special characters and spaces, making them easier to reference in code.
 
 ---
-
--->
 
 ## Session 3: Managing Dates, Strings, and Categories
 
@@ -1200,7 +1193,6 @@ B. A violin plot of genre popularity, with genres ordered by max popularity
 C. A violin plot of max track length across genres  
 D. A histogram showing popularity grouped by genre
 
-<!--
 ---
 
 
@@ -1260,5 +1252,3 @@ B. A violin plot of genre popularity, with genres ordered by max popularity
 
 **Explanation:**  
 `fct_reorder()` reorders the factor levels by maximum popularity. The violin plot then visualizes the distribution of popularity for each genre in this new order.
-
--->
