@@ -435,9 +435,9 @@ While `map()` transforms each list element, `reduce()` is used to combine themâ€
 
 ```{r}
 # Create a static scatterplot with ggplot2 comparing danceability and energy
-p <- ggplot(spotify, aes(x = danceability, y = energy)) +
-  geom_point(alpha = 0.4, color = "darkorange") +
-  labs(title = "Energy vs Danceability", x = "Danceability", y = "Energy")
+( p <- ggplot(spotify, aes(x = danceability, y = energy)) +
+  geom_point(alpha = 0.1, color = "red") +
+  labs(title = "Energy vs Danceability") )
 ```
 
 ```{r}
@@ -454,14 +454,16 @@ ggplotly(p)
 ### 42. Adding hover text to a scatterplot
 
 ```{r}
+set.seed(2025)
+
 # Create a scatterplot with custom hover text showing track name, artists, and genre
-p <- ggplot(spotify |> slice_sample(n = 100), 
+p <- ggplot(spotify |> slice_sample(n = 100),
             aes(x = danceability, y = energy,
                 text = paste("Track:", track_name,
                              "<br>Artist(s):", artists,
                              "<br>Genre:", track_genre))) +
-  geom_point(alpha = 0.7, color = "steelblue") +
-  labs(title = "Danceability vs Energy (Hover to Explore)")
+  geom_point(aes(color = track_genre)) +
+  labs(title = "Energy vs Danceability (Hover to Explore)")
 ```
 
 ```{r}
@@ -479,8 +481,7 @@ ggplotly(p, tooltip = "text")
 
 ```{r}
 # Count the number of tracks in each genre and sort from most to least
-genre_counts <- spotify |>
-  count(track_genre, sort = TRUE)
+genre_counts <- spotify |> count(track_genre, sort = TRUE)
 ```
 
 ```{r}
@@ -491,9 +492,9 @@ plot_ly(
   x = ~reorder(track_genre, n),
   y = ~n,
   type = "bar",
-  hovertext = ~paste(n, "tracks"),  # Only used for tooltip
+  hovertext = ~paste(n, "tracks"),
   hoverinfo = "text"
-) |>
+) |> 
   layout(
     title = "Number of Tracks by Genre",
     xaxis = list(title = "Genre"),
@@ -508,20 +509,15 @@ plot_ly(
 - `layout()` adds a clear title and axis labels, making the plot suitable for reports or dashboards.  
 - This example demonstrates how to create sleek, interactive summaries of categorical variables with minimal code.
 
-### 44. Interactive boxplots by popularity group
+### 44. Interactive boxplots by energy group
 
 ```{r}
 # Create an interactive boxplot of energy levels across genres
-plot_ly(
-  data = spotify,
-  x = ~track_genre,
-  y = ~energy,
-  type = "box"
-) |>
-  layout(
-    title = "Energy Distribution by Genre",
-    xaxis = list(title = "Genre"),
-    yaxis = list(title = "Energy")
+spotify |> 
+  plot_ly(
+    x = ~track_genre,
+    y = ~energy,
+    type = "box"
   )
 ```
 

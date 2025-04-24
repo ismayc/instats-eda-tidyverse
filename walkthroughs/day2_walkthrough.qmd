@@ -1,114 +1,209 @@
 ---
-title: "Statistics in R with the `tidyverse`"
+title: "Exploratory Data Analysis in R with the `tidyverse`"
 author: "Dr. Chester Ismay"
 subtitle: "Day 2 Walkthrough"
-format: html
+format: 
+  html:
+    toc: true
+    toc-title: "Contents"  # Optional, customize the title of the TOC
+    toc-location: left     # Specifies the location of the TOC (can also be 'right')
+    toc-float: true        # Enables the floating TOC
+    toc-depth: 3           # Sets the depth of the TOC (levels of headers)
 ---
 
 ```{r}
 #| include: false
 options(width = 120)
+knitr::opts_chunk$set(message = FALSE)
 ```
 
 
-# Day 2: Linear Regression in R
+# Day 2: Automating Repetitive Tasks & Interactive Visualizations
 
-## Session 4: Simple Linear Regression Analysis
+## Session 4: Functional Programming
 
-### 1. Load Necessary Packages
+### 31. Load necessary packages and data
 
 ```{r}
-# Load the required packages
-library(dplyr)
-library(ggplot2)
+#| message: false
+
+# Load the required packages and data
+library(purrr)
 library(moderndive)
+library(tidyr)
+library(dplyr)
+library(stringr)
+library(plotly)
+library(azflights24)
+library(lubridate)
+
+spotify <- spotify_by_genre |>
+  dplyr::distinct(track_name, .keep_all = TRUE) 
 ```
 
-- These packages provide tools for data wrangling, visualization, and modeling.  
+This gets us back to where we were before when we finished up the Day 1 material.
 
----
-
-### 2. Prepare Dataset
+### 32. Mapping over columns to summarize
 
 ```{r}
-library(palmerpenguins)
-
-# Only use complete rows of data
-
-```
-
-- We'll be exploring the `penguins` data frame from the `palmerpenguins` package as well. It contains size measurements for three penguin species observed on three islands in the Palmer Archipelago, Antarctica. More information is [here](https://allisonhorst.github.io/palmerpenguins/articles/intro.html).  
-- We remove rows with missing values.
-
----
-
-### 3. Exploring Dataset Structure
-
-```{r}
-# Use glimpse to explore the structure of the dataset
+# Summarize multiple numeric audio features by calculating their mean and standard deviation
+# Use across() to apply functions over selected columns
+# Reshape the output so each row represents a feature-statistic combination
 
 ```
 
-
----
-
-### 4. Summary Statistics
+### 33. Extracting featured artists with `map_chr()` and `str_extract()`
 
 ```{r}
-# Summarize mean and median values for flipper length and body mass
+# Define a custom function to extract featured artist names from track titles
+# Looks for phrases like "(feat. XYZ)" or "(with XYZ)" using regex
 
 ```
 
-
----
-
-### 5. Using `tidy_summary()` Function
-
 ```{r}
-# Use tidy_summary to get a clean summary of the data
+# Apply the extraction function to each track name using map_chr
+# Create a new column for the extracted featured artist string
+# Filter to show only tracks that actually contain a featured artist
+# Then display a random sample of 30 such tracks
 
 ```
 
 
----
-
-### 6. Correlation Between Flipper Length and Body Mass
+### 34. Applying a summary function across groups
 
 ```{r}
-# Compute the correlation between flipper length and body mass
+# Split the spotify dataset into a list of data frames, one per genre
+
+
+# Assign names to each list element based on the genre
+
+```
+
+```{r}
+# Apply a trimmed mean function to the popularity column of each genre
+# map_dbl() returns a named numeric vector of trimmed means
 
 ```
 
 
----
 
-### 7. Scatterplot of Flipper Length and Body Mass
+### 35. Using `walk()` for side effects like saving
 
 ```{r}
-# Plot the relationship between flipper length and body mass
+# Identify the top 3 most common genres by number of tracks
+# Extract the genre names into a character vector
+
+```
+
+```{r}
+# For each of the top 3 genres, create a histogram of popularity
+# Save each plot as a PNG file using ggsave()
 
 ```
 
 
----
-
-### 8. Regression Line
+### 36. Identifying shouting titles
 
 ```{r}
-# The same scatterplot with a regression line added
+# Define a function that returns TRUE if a title is all uppercase
+# It allows spaces, digits, and punctuation but must contain at least one A–Z letter
+
+```
+
+```{r}
+# Apply the function to each track title to flag shouting titles
+# Add a new logical column and sort the data so TRUE values appear first
+
+```
+
+```{r}
+# Count how many tracks are considered "shouting" titles vs not
 
 ```
 
 
----
-
-### 9. Fit a Regression Model
+### 37. Nesting and mapping to summarize within groups
 
 ```{r}
-# Fit a linear regression model
+# Identify the top 3 most common genres by track count
+# For each genre, create a filtered data frame with one artist per row
+
+```
+
+```{r}
+# Combine all genre-specific data frames into one using reduce() and bind_rows()
 
 
-# Get the regression coefficients
+# Count how often each artist appears in the top 3 genres
+
+```
+
+
+
+### 38. Functional search: which column contains a specific value?
+
+```{r}
+# Select only character columns for text-based search
+# Use imap_lgl() to check each column for any value that includes the word "may" (case-insensitive)
+# Return only the columns where the condition is TRUE
+
+```
+
+
+
+### 39. Plotting multiple features with `map()` and `ggplot2`
+
+```{r}
+# Define which numeric audio features to visualize
+
+# Create a function that builds a violin plot of the given feature
+# Plots distribution by popularity group and facets by genre
+
+```
+
+```{r}
+# Use map() to generate a list of plots—one per feature
+
+# Use walk2() to print a message before showing each plot
+
+```
+
+
+### 40. Automating summary + plot pipeline
+
+```{r}
+# Define which numeric features we want to analyze
+features <- c("energy", "danceability", "tempo", "valence")
+
+# Create a function that:
+# (1) finds the most extreme (highest) track for a feature
+# (2) counts how many values are missing
+# (3) creates a histogram of the feature
+feature_info_plot <- function(var, ...) {
+  
+  # Convert character column name to symbol
+  
+  
+  # Find the track with the highest value for the feature
+
+  
+  
+  # Count missing values for the feature
+
+  
+  # Create a histogram for the feature
+
+  
+  # Return a list with all outputs
+
+}
+```
+
+```{r}
+# Apply the summary+plot function to each feature
+
+
+# Example: View the second track, missing count, and histogram for danceability
 
 ```
 
@@ -117,284 +212,677 @@ library(palmerpenguins)
 
 ### Session 4 Review Questions
 
-**(4.1)** What is the purpose of the `na.omit()` function in the code below?
+**`(4.1)`** What is the primary benefit of using `map_*()` functions from the **`purrr`** package?
 
-```r
-penguins_data <- penguins |>
-  select(species, island, flipper_length_mm, body_mass_g) |>
-  na.omit()
-```
-
-A. It replaces missing values with the median.  
-B. It removes any rows that contain missing values.  
-C. It converts missing values to zeros.  
-D. It fills missing values with the previous non-missing value.
+A. They allow you to mutate multiple columns in a single step without grouping.  
+B. They eliminate the need for using loops by applying a function across lists or vectors, returning a consistent output type.  
+C. They automatically create interactive plots for each element of a list.  
+D. They convert data frames into nested tibbles grouped by variable type.
 
 ---
 
-**(4.2)** What does the `tidy_summary()` function do when applied to numeric columns in the `penguins_data` data frame?
+**`(4.2)`** In the context of functional programming in R, what is a key reason for using `walk()` instead of `map()`?
 
-A. It generates summary statistics for each column in the data frame.  
-B. It prints the first 6 rows of the data frame.  
-C. It provides a compact overview of the data, including column names and data types.  
-D. It creates a scatterplot of the variables in the data frame.
-
----
-
-**(4.3)** Which of the following correctly calculates the mean body mass in the `penguins_data` data frame?
-
-A. `summarize |> penguins_data(mean_flipper = mean(body_mass_g))`  
-B. `summarize(mean(body_mass_g))`  
-C. `summarize(penguins_data, mean = body_mass_g)`
-D. `penguins_data |> summarize(mean_body_mass = mean(body_mass_g))`  
+A. `walk()` is used when you want to display plots as inline HTML.  
+B. `walk()` is preferred when applying a function with a return value that will be used later.  
+C. `walk()` is for performing operations with side effects (e.g., saving plots), where you don’t need a return value.  
+D. `walk()` is the only purrr function that supports parallel processing out of the box.
 
 ---
 
-**(4.4)** What does the `get_correlation()` function do when applied in the code below?
+**`(4.3)`** What is a major advantage of defining reusable functions (e.g., `is_all_caps()` or `feature_info_plot()`), especially when paired with `map()`?
 
-```r
-penguins_data |>
-  get_correlation(formula = flipper_length_mm ~ body_mass_g)
-```
-
-A. It fits a linear regression model.  
-B. It gives a measure of the linear relationship between flipper length and body mass.
-C. It plots a scatterplot of flipper length and body mass.  
-D. It generates summary statistics for flipper length and body mass.
+A. It allows you to convert tidyverse functions into base R equivalents.  
+B. It minimizes the need for conditional logic and nesting entirely.  
+C. It supports clearer, modular code that can be reused and debugged more easily.  
+D. It ensures all results are automatically returned as JSON-compatible outputs.
 
 ---
 
-**(4.5)** In the following code, what is the purpose of `geom_smooth(method = "lm", se = FALSE)`?
+**`(4.4)`** How does the `reduce()` function complement `map()` when working with lists?
 
-```r
-ggplot(penguins_data, aes(x = flipper_length_mm, y = body_mass_g)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(x = "Flipper Length (mm)", y = "Body Mass (g)",
-       title = "Flipper Length vs. Body Mass with Regression Line")
-```
-
-A. It adds a smoothed curve based on a polynomial fit to the scatterplot.  
-B. It adds a linear regression line to the scatterplot without displaying the confidence interval.  
-C. It adjusts the transparency of the points in the scatterplot.  
-D. It calculates and displays residuals on the plot.
+A. It generates side-effect functions like `ggsave()` or `print()`, replacing the need for `walk()`.  
+B. It sequentially combines list elements using a binary function, such as merging multiple data frames.  
+C. It transforms character vectors into numeric ones using consistent logic.  
+D. It is used to convert factor variables to character to prepare for visualization.
 
 ---
 
-## Session 5: Multiple Linear Regression Analysis (Part 1)
+**`(4.5)`** Which scenario best illustrates the use of `imap_lgl()` in exploratory analysis?
 
-### 10: Fitting a Simple Linear Regression with a Categorical Regressor
+A. Searching a list of numeric vectors to compute trimmed means.  
+B. Iterating over grouped plots and saving them to PNGs with labeled filenames.  
+C. Searching all character columns to identify which contain a specific keyword like “may”.  
+D. Converting grouped data frames into JSON summaries for API output.
+
+---
+
+## Session 5: Interactive Data Visualization with `plotly`
+
+### 41. Converting a `ggplot2` scatterplot to an interactive plot with `ggplotly()`
 
 ```{r}
-# Fit a simple linear regression model with species as a predictor
-
-
-# Get regression coefficients
+# Create a static scatterplot with ggplot2 comparing danceability and energy
 
 ```
-
-
----
-
-### 11: Visualizing Data with Categorical Variables
 
 ```{r}
-# Scatterplot with species as color for grouping
+# Convert the static ggplot to an interactive plot using plotly
 
 ```
 
----
-
-### 12: Summarizing the Target and Regressors (One numerical and one categorical)
+### 42. Adding hover text to a scatterplot
 
 ```{r}
-# Summarize the target and regressors
+# Create a scatterplot with custom hover text showing track name, artists, and genre
 
 ```
-
----
-
-### 13: Fitting a Multiple Regression Model with Interaction Terms
 
 ```{r}
-# Fit a multiple regression model with interaction
-
-
-# Get regression coefficients
+# Convert the plot to an interactive version with custom tooltip enabled
 
 ```
 
 
----
-
-### 14: Adding Interaction Terms to the Regression Plot
+### 43. Creating an interactive bar chart of track counts by genre
 
 ```{r}
-# Scatterplot with regression lines by species
+# Count the number of tracks in each genre and sort from most to least
 
 ```
 
+```{r}
+# Create an interactive bar chart using plotly::plot_ly
+# Display track counts with custom hover text
+
+```
+
+
+### 44. Interactive boxplots by energy group
+
+```{r}
+# Create an interactive boxplot of energy levels across genres
+
+```
+
+### 45. Comparing multiple features with faceted interactive plots
+
+```{r}
+# Convert dataset to long format for multiple features
+
+```
+
+```{r}
+# Create a faceted boxplot comparing distributions across popularity groups
+# One facet per audio feature
+
+```
+
+```{r}
+# Convert the static faceted plot to an interactive plot
+
+```
+
+
+
+### 46. Interactive time series plot with `azflights24::weather`
+
+```{r}
+# Create an interactive line chart of daily max wind gusts at FLG airport
+
+```
+
+
+### 47. On-Time performance scatter plot
+
+```{r}
+# Load the scales package for formatting percentages
+
+
+# Summarize flight on-time performance and flight counts by origin and carrier
+
+```
+
+```{r}
+# Create scatterplot comparing on-time departure and arrival performance
+
+```
+
+```{r}
+# Convert to interactive with tooltip
+```
+
+
+### 48. Highlighting hover info for survey data
+
+```{r}
+# Load weather source survey data and calculate percentages before plotting
+data("weather_check", package = "fivethirtyeight")
+
+
+```
+
+### 49. Interactive histogram of energy with range slider
+
+```{r}
+# Create a histogram of the 'energy' feature with custom styling and a range slider
+
+```
+
+### 50. Linking interactivity with `ggplot2` + `plotly` + custom tooltips
+
+```{r}
+# Step 1: Summarize the monthly high temperatures by airport and year
+
+```
+
+```{r}
+# Step 2: Create the ggplot line chart with tooltip text
+
+```
+
+```{r}
+# Step 3: Convert to an interactive plot with custom tooltip
+
+```
+
+- We compute monthly high temperatures using `max(temp)` grouped by airport, year, and month for a clear seasonal summary.  
+- Month labels are extracted with `month(..., label = TRUE)` for improved plot readability.  
+- A detailed tooltip is created with `paste0()`, combining airport, month, year, and temperature info.  
+- `interaction(year, origin)` ensures each line represents a unique airport–year combination in the plot.  
+- `ggplotly(p, tooltip = "text")` adds interactivity, enabling users to hover for insights and compare trends across time and location.  
+- This is a great example of combining temporal, spatial, and statistical elements into one clear and engaging chart.
 
 ---
 
 ### Session 5 Review Questions
 
-**(5.1)** What is the default baseline island in the simple linear regression model for predicting `body_mass_g` using `island` as a categorical variable?
+**`(5.1)`** What is the primary advantage of using `ggplotly()` with an existing `ggplot2` plot?
 
-A. Torgersen  
-B. Biscoe  
-C. Dream  
-D. The island with the highest body mass
-
----
-
-**(5.2)** In the following regression model with interaction terms, what does the coefficient for `flipper_length_mm:speciesGentoo` represent?
-
-```r
-multi_model_interaction <- lm(body_mass_g ~ flipper_length_mm * species, data = penguins_data)
-```
-
-A. The slope of the regression line for Gentoo penguins  
-B. The average body mass of Gentoo penguins  
-C. The change in the relationship between flipper length and body mass for Gentoo penguins compared to the baseline  
-D. The difference in intercept for Gentoo penguins compared to the baseline  
+A. It converts the plot into an interactive version with hover, zoom, and pan capabilities.  
+B. It exports the plot directly to PowerPoint or PDF with built-in animations.  
+C. It adds static labels to each point for easier print output.  
+D. It improves rendering performance by simplifying the plot structure.  
 
 ---
 
-**(5.3)** What is the purpose of adding interaction terms to a multiple regression model?
+**`(5.2)`** Why is specifying the `tooltip = "text"` argument useful in `ggplotly()`?
 
-A. To make the model more complex without any real benefit  
-B. To estimate the relationship between each explanatory variable and the response variable independently  
-C. To account for how the relationship between one explanatory variable and the response depends on another explanatory variable  
-D. To automatically improve the model's R-squared value
+A. It automatically maps data aesthetics like size or color into tooltips.  
+B. It links tooltips to custom text content, allowing for more informative hover details.  
+C. It ensures that labels are automatically translated into multiple languages.  
+D. It prevents tooltips from showing variable names when using `plot_ly()`.
 
 ---
 
-**(5.4)** What does the following plot indicate about the relationship between flipper length and body mass for different islands?
+**`(5.3)`** In `plot_ly()`, which of the following enhances the readability of categorical plots like bar charts?
+
+A. Setting `hoverinfo = "none"` to reduce distractions  
+B. Using `facet_wrap()` to group categories into subplots  
+C. Adding annotations using `geom_text()`  
+D. Sorting categories manually by reordering the `y` aesthetic  
+
+---
+
+**`(5.4)`** When creating an interactive histogram with a range slider in `plotly`, which element must be specified?
+
+A. `range_slider = "x"` in the histogram trace definition  
+B. `rangeSelector = TRUE` in the histogram layout  
+C. `add_slider()` inside `geom_histogram()`  
+D. `rangeslider = list(visible = TRUE)` inside the `xaxis` layout  
+
+---
+
+**`(5.5)`** What is the benefit of transforming a dataset to long format before plotting multiple features interactively?
+
+A. It enables easier comparison of multiple variables across a common grouping, such as `popular_or_not`.  
+B. It prevents the need to use the `pivot_wider()` function for grouped bar plots.  
+C. It simplifies layout by removing the need for facetting or coloring.  
+D. It allows faster computation since each column becomes a numeric vector.
+
+---
+
+
+## Session 6: End-to-End Case Study
+
+**Part 1: Load and Prepare the Data**
+
+### 51. Load the data and get an overview
 
 ```{r}
-#| eval: false
-ggplot(penguins_data, aes(x = flipper_length_mm, y = body_mass_g, color = island)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(x = "Flipper Length (mm)", y = "Body Mass (g)", color = "Island")
+# Load the readr package for reading CSV files
+library(readr)
+
+# Read in the raw data from a CSV file
+palmtrees_raw <- read_csv("../palmtrees_funky.csv")
+
+# Display the dataset to get a quick sense of the structure and contents
+palmtrees_raw
 ```
 
-A. The relationship between flipper length and body mass is the same for all islands 
-B. The relationship between flipper length and body mass differs across species, with each island having a different slope  
-C. The islands do not influence the relationship between flipper length and body mass  
-D. Only the intercept differs for each island, but the slope is the same
+- We use `read_csv()` from the `readr` package to load the `palmtrees_funky.csv` dataset into R.  
+- Printing the dataset gives an immediate overview of its structure, column names, and sample data, helping to identify any potential issues.
 
----
 
-**(5.5)** In the multiple regression model with interaction terms, how are dummy variables used for categorical predictors?
-
-A. Dummy variables are used to represent the different categories of a categorical variable 
-B. Dummy variables are used to represent each numerical variable  
-C. Dummy variables are used to replace the intercept in the regression model  
-D. Dummy variables are not necessary for categorical variables
-
----
-
-## Session 6: Multiple Linear Regression Analysis (Part 2)
-
-### 15. Fitting a Multiple Regression Model Without Interactions
+### 52. Standardize column names for tidy workflows
 
 ```{r}
-# Fit a multiple regression model without interaction terms
+# Load janitor for cleaning messy or inconsistent column names
+library(janitor)
 
+# Clean column names: convert to lowercase, replace spaces and special characters with underscores
+palms <- palmtrees_raw |> clean_names()
 
-# Get regression coefficients
-
+# View structure and types of cleaned data
+glimpse(palms)
 ```
 
+- `janitor::clean_names()` standardizes column names by converting them to lowercase and replacing spaces/special characters with underscores.  
+- `glimpse()` helps confirm the cleaning worked and shows the structure of the cleaned dataset, including column types.  
+- This cleanup step improves consistency and reduces potential errors when referencing columns in code.
 
----
-
-### 16. Visualizing the Parallel Slopes Model
+### 53. Check for missing data
 
 ```{r}
-# Scatterplot with regression lines by species (different intercepts but same slopes)
-
+# Summarize how many missing values are in each column
+palms |> 
+  summarize(across(everything(), ~ sum(is.na(.)))) |>
+  pivot_longer(cols = everything(), names_to = "column", values_to = "n_missing") |>
+  arrange(desc(n_missing))
 ```
 
+- We use `across()` to count missing values (`NA`s) in each column, providing an overview of data completeness.  
+- `pivot_longer()` reshapes the result into a tidy format for easier interpretation and analysis.  
+- Sorting by the number of missing values helps prioritize columns that may require cleaning or imputation.
 
 ---
 
-### 17. Summarize the Numerical Regressors and Target Variable
+**Part 2: Understand Variable Types and Distributions**
+
+### 54. Explore the structure of categorical traits
 
 ```{r}
-# Use tidy_summary to get a clean summary of the data for a multiple regression
-# with flipper length and bill length and regressors and body mass as the
-# outcome
-
+# Count the number of unique values in each selected categorical column
+palms |> 
+  select(climbing, erect, stem_armed, fruit_size_categorical, 
+         fruit_shape, conspicuousness) |>
+  map_df(~ tibble(n_unique = n_distinct(.x, na.rm = TRUE)), .id = "variable")
 ```
-
-
----
-
-### 18. Fitting a Multiple Regression Model with Two Numerical Predictors
 
 ```{r}
-# Fit a multiple regression model
-
-
-# Get regression coefficients
-
+# Use moderndive's tidy_summary() for a more descriptive summary of the same traits
+palms |> 
+  select(climbing, erect, stem_armed, fruit_size_categorical, 
+         fruit_shape, conspicuousness) |>
+  tidy_summary()
 ```
 
----
+- We use `map_df()` and `n_distinct()` to count unique values in selected categorical columns, giving an overview of their diversity.  
+- `tidy_summary()` from `moderndive` provides a more detailed summary, including counts, proportions, and missing values.  
+- These steps help identify well-defined traits and highlight categorical variables that may need cleaning or recoding.
 
-### 19. Visualizing the Relationship between Variables (with SLR)
+### 55. Distribution of fruit size types
 
 ```{r}
-# Create scatterplot with regression lines for both variables
-
+# Visualize how species are distributed across fruit size categories
+palms |> ggplot(aes(x = fruit_size_categorical)) +
+  geom_bar(fill = "forestgreen") +
+  labs(title = "Distribution of Palm Fruit Sizes")
 ```
 
+- We use `geom_bar()` to create a bar chart that shows the distribution of palm species across different fruit size categories.
+- This chart helps identify whether some fruit size categories are more common than others, offering a quick assessment of the data's distribution.
+
+### 56. Create a new trait combining armed features
+
+```{r}
+# Create a new column that summarizes whether the plant has any armament (on stem or leaves)
+palms <- palms |>
+  mutate(is_armed = case_when(
+    stem_armed == "armed" | leaves_armed == "armed" ~ "Armed",
+    stem_armed == "non-armed" & leaves_armed == "non-armed" ~ "Not Armed",
+    TRUE ~ "Unknown"
+  ))
+
+# Count the number of species in each armament category
+palms |> count(is_armed)
+```
+
+- We create a new column, `is_armed`, that combines `stem_armed` and `leaves_armed` into a unified classification of "Armed" or "Not Armed".  
+- The count of species in each armament category is displayed using `count(is_armed)`, giving us insight into the distribution of plant armament.  
+
+### 57. Relationship between fruit size and stem height
+
+```{r}
+# Visualize how stem height varies across different fruit size categories
+palms |> 
+  filter(!is.na(max_stem_height_m)) |>
+  ggplot(aes(x = fruit_size_categorical, y = max_stem_height_m)) +
+  geom_boxplot(fill = "tan") +
+  labs(title = "Stem Height by Fruit Size")
+```
+
+- We use a boxplot to visualize how stem height varies across different fruit size categories.  
+- `filter()` removes missing height values, and `geom_boxplot()` displays the distribution of stem heights for each fruit size group.  
+
+### 58. Distribution of palm subfamilies
+
+```{r}
+# Count how many species belong to each palm subfamily and visualize with a horizontal bar chart
+palms |> 
+  count(palm_subfamily, sort = TRUE) |>
+  ggplot(aes(x = reorder(palm_subfamily, n), y = n)) +
+  geom_col(fill = "lightblue") +
+  coord_flip() +
+  labs(
+    title = "Distribution of Palm Subfamilies",
+    x = "Palm Subfamily",
+    y = "Number of Species"
+  )
+```
+
+- We use a horizontal bar chart to visualize the distribution of palm species across subfamilies, with bars ordered by frequency.  
+- `coord_flip()` rotates the chart for better readability, making it easier to compare the number of species in each subfamily.  
+
+
+### 59. Visualize fruit conspicuousness across subfamilies
+
+```{r}
+# Count the number of species in each palm subfamily by fruit conspicuousness category
+palms |> 
+  filter(!is.na(conspicuousness)) |> 
+  count(palm_subfamily, conspicuousness) |> 
+  ggplot(aes(x = palm_subfamily, y = n, fill = conspicuousness)) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  labs(
+    title = "Distribution of Conspicuous vs Cryptic Fruits by Subfamily",
+    x = "Palm Subfamily",
+    y = "Number of Species"
+  )
+```
+
+- We use a side-by-side bar chart to compare fruit conspicuousness (conspicuous vs. cryptic) across palm subfamilies.  
+- `position = "dodge"` places the bars next to each other, making it easy to compare the number of species in each category.  
+
+
+### 60. Check for outliers in stem height
+
+```{r}
+# Plot a histogram to explore the distribution of stem heights
+palms |> 
+  ggplot(aes(x = max_stem_height_m)) +
+  geom_histogram(bins = 30, fill = "turquoise", color = "black") +
+  labs(title = "Distribution of Stem Heights")
+```
+
+- The histogram visualizes the distribution of stem heights across palm species, helping to identify common height ranges and outliers.  
+- The color choice (`turquoise` for fill and `black` for borders) enhances the chart's clarity and visual appeal.  
+
+
+### 61. Summarize all numeric traits using `purrr::map_df()`
+
+```{r}
+# Select numeric columns and compute mean and standard deviation for each
+num_cols <- palms |> select(where(is.numeric))
+map_df(num_cols, 
+       ~ tibble(
+         mean = mean(.x, na.rm = TRUE), 
+         sd = sd(.x, na.rm = TRUE)
+       ), .id = "variable")
+```
+
+```{r}
+# Compare with tidy_summary() for a full tidy-style summary
+palms |> 
+  select(where(is.numeric)) |>
+  tidy_summary(na.rm = TRUE) |> 
+  select(column, mean, sd)
+```
+
+- We use `map_df()` to compute the mean and standard deviation for each numeric column, creating a tidy summary of the data.  
+- `tidy_summary()` from the `moderndive` package provides a more comprehensive summary, including missing values, and is useful for quick reporting.  
+- Both methods help identify variables with high variability or missing data, preparing the dataset for further analysis or modeling.
+
+### 62. Explore common color description phrases
+
+```{r}
+# Count how many species use each raw fruit color description
+palms |> 
+  filter(!is.na(fruit_color_description_raw)) |> 
+  count(fruit_color_description_raw, sort = TRUE)
+```
+
+- We filter out missing values and count how many times each raw fruit color description appears in the dataset.  
+- Sorting the results helps highlight the most common color descriptions and identifies patterns or inconsistencies.
+
+### 63. Count unique fruit shapes
+
+```{r}
+# Count the number of species associated with each unique fruit shape
+palms |> 
+  count(fruit_shape, sort = TRUE) |>
+  filter(!is.na(fruit_shape))
+```
+
+- We count the number of species associated with each unique fruit shape, sorting the results to see the most common shapes.  
+- Filtering out `NA` values ensures we focus on valid entries, providing a clearer view of the fruit shape distribution.
+
 ---
 
-### Session 6 Review Questions
+**Part 3: Explore Relationships Between Traits**
 
-**`(6.1)`** What is the main assumption in a multiple regression model without interaction terms?
+### 64. Identify rarer trait combinations
 
-A. The relationship between the explanatory variables and the response is always quadratic.  
-B. The slope of the regression line is different for each level of the categorical variable.  
-C. The slope of the regression line is the same for all levels of the categorical variable.  
-D. The intercept of the regression line is the same for all levels of the categorical variable.
+```{r}
+# Check how values are distributed across two traits: stem_armed and conspicuousness
+palms |> count(stem_armed)
+palms |> count(conspicuousness)
+```
+
+```{r}
+# Identify species that are non-armed and have missing conspicuousness data
+rare_traits <- palms |> 
+  filter(stem_armed == "non-armed", 
+         is.na(conspicuousness)) |>
+  select(spec_name, palm_subfamily, palm_tribe, climbing, stem_armed, 
+         conspicuousness)
+rare_traits
+```
+
+```{r}
+# Count how many species have this rare trait combination
+nrow(rare_traits)
+```
+
+```{r}
+# Summarize how these rare combinations are distributed by palm subfamily
+rare_traits |> count(palm_subfamily, sort = TRUE)
+```
+
+- We first check the distribution of values in `stem_armed` and `conspicuousness` to understand their patterns.  
+- We then filter for species that are "non-armed" but have missing `conspicuousness` data, highlighting rare trait combinations.  
+- Finally, we count how many species match this rare combination and summarize its distribution across palm subfamilies, revealing potential data gaps or unusual evolutionary traits.
+
+### 65. Compare stem diameter by growth form
+
+```{r}
+# Compare stem diameter distributions between different growth forms (erect vs. not)
+palms |> filter(!is.na(max_stem_dia_cm)) |>
+  ggplot(aes(x = erect, y = max_stem_dia_cm)) +
+  geom_boxplot() +
+  labs(title = "Stem Diameter by Erect Growth Form")
+```
+
+- We use a boxplot to compare stem diameter distributions between "erect" and "non-erect" growth forms.  
+- The plot shows medians and variability, helping identify whether growth form correlates with stem thickness.  
+- This visualization is useful for understanding structural adaptations related to plant morphology.
+
+### 66. Dodged bar chart: fruit shapes by growth form
+
+```{r}
+# Create an interactive dodged bar chart of fruit shapes by growth form
+palms |>
+  filter(!is.na(fruit_shape), !is.na(erect)) |>
+  count(fruit_shape, erect, sort = TRUE) |>
+  mutate(
+    tooltip = paste0(
+      "<b>Fruit Shape:</b> ", fruit_shape,
+      "<br><b>Growth Form:</b> ", erect,
+      "<br><b>Species Count:</b> ", n
+    )
+  ) |>
+  plot_ly(
+    x = ~n,
+    y = ~reorder(fruit_shape, n),
+    color = ~erect,
+    type = "bar",
+    orientation = "h",
+    text = ~tooltip,
+    hoverinfo = "text"
+  ) |>
+  layout(
+    title = "Distribution of Fruit Shapes by Growth Form",
+    xaxis = list(title = "Number of Species"),
+    yaxis = list(title = "Fruit Shape"),
+    barmode = "group"  # Dodged bars for comparison
+  )
+```
+
+- We create an interactive dodged bar chart to compare fruit shapes by growth form, using `plot_ly()` for interactivity.  
+- Bars are grouped side-by-side (`barmode = "group"`) to compare the number of species for each fruit shape and growth form.  
+- Custom tooltips display additional information, making the chart more informative when hovering over the bars.
+
+### 67. Faceted scatterplots: fruit length vs width by palm subfamily
+
+```{r}
+# Filter to include only complete cases for the relevant variables
+palms_filtered <- palms |>
+  filter(
+    !is.na(average_fruit_length_cm),
+    !is.na(average_fruit_width_cm),
+    !is.na(palm_subfamily)
+  )
+
+# Create a faceted scatterplot with interactive tooltips
+p <- ggplot(palms_filtered, aes(
+  x = average_fruit_length_cm,
+  y = average_fruit_width_cm,
+  text = paste(
+    "<b>Species:</b>", spec_name,
+    "<br><b>Length:</b>", round(average_fruit_length_cm, 2), "cm",
+    "<br><b>Width:</b>", round(average_fruit_width_cm, 2), "cm",
+    "<br><b>Subfamily:</b>", palm_subfamily
+  )
+)) +
+  geom_point(alpha = 0.4, color = "darkgreen", size = 2) +
+  facet_wrap(~ palm_subfamily) +
+  labs(
+    title = "Fruit Length vs. Width by Palm Subfamily",
+    x = "Average Fruit Length (cm)",
+    y = "Average Fruit Width (cm)"
+  ) +
+  theme_minimal()
+
+# Convert to interactive
+ggplotly(p, tooltip = "text")
+```
+
+- We create a faceted scatterplot to compare fruit length vs. width, with separate plots for each palm subfamily.  
+- Tooltips display detailed species-level information, including fruit dimensions and subfamily.  
+- Faceting allows for easy comparison of how fruit dimensions vary across subfamilies, while interactivity enhances data exploration.
+
+### 68. Dodged boxplots: stem height by fruit size and armament
+
+```{r}
+# Filter for complete data in height, fruit size, and armament
+palms_box <- palms |>
+  filter(
+    !is.na(max_stem_height_m),
+    !is.na(fruit_size_categorical),
+    !is.na(is_armed)
+  )
+
+# Create boxplots grouped by fruit size and dodged by armament status
+p <- ggplot(palms_box, aes(
+  x = fruit_size_categorical,
+  y = max_stem_height_m,
+  fill = is_armed
+)) +
+  geom_boxplot(
+    outlier.alpha = 0.3,
+    width = 0.6
+  ) +
+  labs(
+    title = "Stem Height by Fruit Size and Armament",
+    x = "Fruit Size Category",
+    y = "Max Stem Height (m)",
+    fill = "Is Armed?"
+  ) +
+  theme_minimal()
+
+# View static version — interactive version misaligns dodges
+p
+```
+
+- The boxplot compares stem height across different fruit size categories, grouped by whether the plant is armed or not.  
+- `geom_boxplot()` visualizes distributions with outliers, while `fill = is_armed` colors the boxes by armament status.  
+- The static version provides a clear view, but interactive versions may misalign the dodged bars.
+
+### 69. Boxplot of blade length by conspicuousness
+
+```{r}
+# Interactive boxplot showing blade length across fruit conspicuousness groups
+palms |>
+  filter(!is.na(max_blade_length_m), !is.na(conspicuousness)) |>
+  plot_ly(
+    x = ~conspicuousness,
+    y = ~max_blade_length_m,
+    type = "box",
+    color = ~conspicuousness,
+    boxpoints = "outliers",
+    text = ~paste("<b>Species:</b>", spec_name),
+    hoverinfo = "text"
+  ) |>
+  layout(
+    title = "Blade Length by Fruit Conspicuousness",
+    xaxis = list(title = "Fruit Conspicuousness"),
+    yaxis = list(title = "Max Blade Length (m)")
+  )
+```
+
+- The interactive boxplot compares blade length across different levels of fruit conspicuousness, with outliers highlighted.  
+- Species names are displayed in tooltips, allowing users to explore individual data points.  
+- This visualization helps identify variations and outliers in leaf length related to fruit visibility traits.
+
+### 70. Highlight common color patterns in tooltip
+
+```{r}
+# Horizontal bar chart of the 10 most frequent fruit color labels
+palms |>
+  filter(!is.na(main_fruit_colors)) |>
+  count(main_fruit_colors, sort = TRUE) |>
+  slice_max(n, n = 10) |>
+  mutate(label = paste0(n, " species")) |>
+  plot_ly(
+    y = ~reorder(main_fruit_colors, n),
+    x = ~n,
+    type = "bar",
+    hoverinfo = ~label,
+    orientation = "h",
+    marker = list(color = "purple")
+  ) |>
+  layout(
+    title = "Top 10 Most Common Fruit Colors",
+    xaxis = list(title = "Number of Species"),
+    yaxis = list(title = "Fruit Color")
+  )
+```
+
+- The interactive bar chart displays the top 10 most common fruit colors, with bars ordered by frequency.  
+- Hovering over the bars shows a custom tooltip with the number of species for each fruit color.  
+- This visualization helps identify the most prevalent fruit colors, which may offer insights into visual patterns or ecological traits.
 
 ---
 
-**`(6.2)`** In the model `lm(body_mass_g ~ flipper_length_mm + species, data = penguins_data)`, what does the coefficient for `speciesGentoo` represent?
-
-A. The effect of being a Gentoo penguin on body mass compared to the baseline species (Adélie).  
-B. The effect of flipper length on body mass for Gentoo penguins only.  
-C. The change in flipper length due to species.  
-D. The effect of body mass on flipper length for Gentoo penguins.
-
----
-
-**`(6.3)`** What does the function `geom_parallel_slopes()` do in a regression plot?
-
-A. It fits regression lines with different slopes for each group.  
-B. It plots regression lines with the same slope but different intercepts for each group.  
-C. It creates a scatterplot without any regression lines.  
-D. It visualizes interaction effects between the variables.
-
----
-
-**`(6.4)`** In the model `lm(body_mass_g ~ flipper_length_mm + bill_length_mm, data = penguins_data)`, what do the coefficients for `flipper_length_mm` and `bill_length_mm` represent?
-
-A. The total body mass of each penguin species.  
-B. The predicted body mass for penguins with average bill and flipper lengths.
-C. The interaction effect between flipper length and bill length.  
-D. The effect of bill length on body mass, controlling for flipper length, and vice versa. 
-
----
-
-**`(6.5)`** What does a regression model without interaction terms assume about the relationship between the explanatory variables and the response variable?
-
-A. The explanatory variables are not related to the response.  
-B. The relationship between the explanatory variables and the response is independent of one another.  
-C. The explanatory variables interact to affect the response.  
-D. The response variable depends only on the categorical variables.
+Well done! Best wishes on your continued learning journey with R and data science. Remember, the key to honing these skills is practice and exploration. Don't hesitate to revisit these concepts and apply them to your own projects. Happy coding!
