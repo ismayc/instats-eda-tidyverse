@@ -14,6 +14,7 @@ format:
 ```{r}
 #| include: false
 options(width = 120)
+knitr::opts_chunk$set(message = FALSE)
 ```
 
 
@@ -24,6 +25,8 @@ options(width = 120)
 ### 31. Load necessary packages and data
 
 ```{r}
+#| message: false
+
 # Load the required packages and data
 library(purrr)
 library(moderndive)
@@ -288,25 +291,27 @@ features <- c("energy", "danceability", "tempo", "valence")
 # (3) creates a histogram of the feature
 feature_info_plot <- function(var, ...) {
   
+  # Convert character column name to symbol
+  var_sym <- sym(var)
+  
   # Find the track with the highest value for the feature
   top_track <- spotify |>
-    filter(!is.na(.data[[var]])) |>
-    arrange(desc(.data[[var]])) |>
+    filter(!is.na(!!var_sym)) |>
+    arrange(desc(!!var_sym)) |>
     slice(1) |>
-    select(track_name, artists, !!var := .data[[var]])
+    select(track_name, artists, !!var_sym)
   
   # Count missing values for the feature
   n_missing <- spotify |>
-    summarize(missing = sum(is.na(.data[[var]]))) |>
+    summarize(missing = sum(is.na(!!var_sym))) |>
     pull(missing)
   
   # Create a histogram for the feature
-  plot <- spotify |>
-    ggplot(aes(x = .data[[var]])) +
+  plot <- ggplot(spotify, aes(x = !!var_sym)) +
     geom_histogram(fill = "coral", color = "black", ...) +
     labs(title = paste("Distribution of", var), x = var)
   
-  # Return a list of summary info and plot
+  # Return a list with all outputs
   list(top_track = top_track, missing = n_missing, plot = plot)
 }
 ```
@@ -322,7 +327,7 @@ results[[2]]$plot
 ```
 
 - We define a single function that bundles three tasks: finding the top-valued track, counting missing values, and creating a histogram for a given feature.  
-- `.data[[var]]` lets us dynamically reference column names inside `dplyr` and `ggplot2`, making the function reusable.  
+- `sym(var)` combined with the tidy evaluation operator `!!` allows us to **dynamically reference column names** in both `dplyr` and `ggplot2`, making the function reusable across variables.  
 - The `top_track` output shows which song has the highest value for the selected feature.  
 - The `missing` count gives quick insight into data quality for each feature.  
 - Each `plot` is a histogram of the feature's distribution, styled with customizable arguments like `bins`.  
@@ -486,7 +491,7 @@ plot_ly(
   x = ~reorder(track_genre, n),
   y = ~n,
   type = "bar",
-  text = ~paste(n, "tracks"),
+  hovertext = ~paste(n, "tracks"),  # Only used for tooltip
   hoverinfo = "text"
 ) |>
   layout(
@@ -655,13 +660,13 @@ weather_check |>
   count(weather_source, sort = TRUE) |>
   mutate(
     pct = scales::percent(n / sum(n), accuracy = 0.1),  # Add percentage column
-    text = paste0(weather_source, "<br>", n, " responses (", pct, ")")  # Custom hover text
+    text = paste0(n, " responses (", pct, ")")  # Custom hover text
   ) |>
   plot_ly(
     y = ~reorder(weather_source, n),  # Reorder by count
     x = ~n,
     type = "bar",
-    text = ~text,
+    hovertext = ~text,
     hoverinfo = "text"  # Use custom hover text
   ) |>
   layout(
